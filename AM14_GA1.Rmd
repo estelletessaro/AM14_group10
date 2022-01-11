@@ -1,0 +1,63 @@
+---
+title: "AM14_GA1"
+author: "Group 10"
+date: "1/10/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load libraries 
+
+```{r, Load libraries}
+library(ggplot2)  
+library(dplyr)
+library(tidyverse)
+library(readxl)
+library(lubridate)
+library(skimr)
+```
+
+## Question 1
+
+Load the monthly stock data. We will also load the daily stock data, which we'll need later in the assignment.
+
+```{r, Load the data}
+monthly_data <- read_excel("PS1_Monthly.xlsx") %>%
+  janitor::clean_names()
+daily_data <- read_excel("PS1_Daily.xlsx") %>%
+  janitor::clean_names()
+
+skimr::skim(monthly_data)
+skimr::skim(daily_data)
+```
+
+
+## Question 2
+
+Now, returns bla bla bla 
+
+Also - upon inspection, the dates are not in the right format and need to be transformed. 
+
+```{r, Question 2}
+
+question2 <- c('MSFT', 'GE')
+
+monthly_data <- monthly_data %>%
+  mutate(date = ymd(date)) %>%
+  filter(ticker %in% question2) %>%
+  mutate(rti = (ret/lag(ret)) - 1,
+         rti_sp = (sprtrn/lag(sprtrn)) - 1,
+         rtix = (retx/lag(retx)) - 1) 
+
+```
+
+## Question 3
+
+```{r}
+daily_clean <- daily_data %>%
+  mutate(date = ymd(date)) 
+```
+
