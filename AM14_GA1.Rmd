@@ -52,6 +52,13 @@ monthly_data <- monthly_data %>%
          rti_sp = (sprtrn/lag(sprtrn)) - 1,
          rtix = (retx/lag(retx)) - 1) 
 
+ggplot(monthly_data, aes(x=date, y=rti, group=ticker, color=ticker)) +
+    geom_line() +
+  theme_minimal()
+
+ggplot(monthly_data, aes(x=date, y=rtix, group=ticker, color=ticker)) +
+    geom_line() +
+  theme_minimal()
 ```
 
 ## Question 3
