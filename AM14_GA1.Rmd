@@ -18,8 +18,6 @@ library(tidyverse)
 library(readxl)
 library(lubridate)
 library(skimr)
-library(moments)
-library(e1071) 
 ```
 
 ## Question 1
@@ -66,36 +64,7 @@ ggplot(monthly_data, aes(x=date, y=rtix, group=ticker, color=ticker)) +
 ## Question 3
 
 ```{r}
-# mutate LRET variables
-monthly_data <- monthly_data %>%
-                mutate(lret = log(ret)) 
-
-# calculate mean, variance, skewness, and kurtosis of the normal returns
-monthly_data %>% 
-  summarise(mean_ret = mean(ret),
-            var_ret = var(ret),
-            skew_ret = skewness(ret),
-            kurt_ret = kurtosis(ret))
-# calculate mean, variance, skewness, and kurtosis of the log returns
-monthly_data %>% 
-  na.omit() %>%
-  summarise(mean_lret = mean(lret),
-            var_lret = var(lret),
-            skew_lret = skewness(lret),
-            kurt_lret = kurtosis(lret))
-
-# Plot the normal against the log returns for MSFT
-monthly_data %>%
-  mutate(date = ymd(date)) %>%
-  filter(ticker == "MSFT") %>%
-  na.omit() %>%
-  ggplot(aes(x=ret, y=lret)) +
-    geom_line() +
-    theme_minimal()
-```
-
-```{r}
-#daily_clean <- daily_data %>%
-#mutate(date = ymd(date)) 
+daily_clean <- daily_data %>%
+  mutate(date = ymd(date)) 
 ```
 

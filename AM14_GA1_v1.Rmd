@@ -1,0 +1,167 @@
+---
+title: "AM14_GA1"
+author: "Group 10"
+date: "1/10/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load libraries 
+
+```{r, Load libraries}
+library(ggplot2)  
+library(dplyr)
+library(tidyverse)
+library(readxl)
+library(lubridate)
+library(skimr)
+library(moments)
+```
+
+## Question 1
+
+Load the monthly stock data. We will also load the daily stock data, which we'll need later in the assignment.
+
+```{r, Load the data, warning=FALSE}
+monthly_data <- read_excel("PS1_Monthly.xlsx") %>%
+  janitor::clean_names() %>%  
+  mutate(date = ymd(date))
+
+skimr::skim(monthly_data)
+
+```
+
+
+## Question 2
+Yuting: Not sure
+
+Now, returns bla bla bla 
+
+Also - upon inspection, the dates are not in the right format and need to be transformed. 
+
+```{r, Question 2}
+question2 <- c('MSFT', 'GE')
+
+monthly_q2 <- monthly_data %>%
+  filter(ticker %in% question2) %>% 
+  mutate(ret1 = ret +1,
+         inv_ret = if_else(ret1 == 1, 1, ret1 * lag(ret1)),
+         retx1 = retx +1,
+         inv_retx = if_else(retx1 == 1, 1, retx1 * lag(retx1)),
+         sprtrn1 = sprtrn +1,
+         inv_sprtrn = if_else(sprtrn1 == 1, 1, sprtrn1 * lag(sprtrn1))) %>% 
+  select(-ret1,-retx1,-sprtrn1)
+
+monthly_q2 %>% filter(ticker == "MSFT") %>% 
+  ggplot(aes(x=date)) +
+  geom_line(aes(y=inv_ret), color="red", alpha = 0.5, size = 1)+
+  geom_line(aes(y=inv_retx), color="blue",alpha = 0.5, size = 1)+
+  theme_minimal()+
+  labs(
+    title="Investment without dividends for MSFT",
+    y="Investment return",
+    x="Date"
+  )
+
+monthly_q2 %>% filter(ticker == "GE") %>% 
+  ggplot(aes(x=date)) +
+  geom_line(aes(y=inv_ret), color="red", alpha = 0.5, size = 1)+
+  geom_line(aes(y=inv_retx), color="blue",alpha = 0.5, size = 1)+
+  theme_minimal()+
+  labs(
+    title="Investment without dividends for GE",
+    y="Investment return",
+    x="Date"
+  )
+```
+
+## Question 3
+yuting: since some return < 0, I filter out them
+
+```{r}
+monthly_log <- monthly_data %>% filter(ret > 0) %>% mutate(lret = log(ret)) 
+sum_table_monthly <- monthly_log %>% 
+  group_by(ticker) %>% 
+  summarise(ret_mean = mean(ret),
+            logret_mean = mean(lret, na.rm = TRUE),
+            ret_var = var(ret),
+            logret_var = var(lret, na.rm = TRUE),
+            ret_skew = skewness(ret),
+            logret_skew = skewness(lret, na.rm = TRUE),
+            ret_kur = kurtosis(ret),
+            logret_kur = kurtosis(lret, na.rm = TRUE))
+sum_table_monthly
+
+monthly_log %>% filter(ticker == "MSFT") %>%
+  ggplot() +
+  geom_line(aes(x= date, y=ret, color="ret"), alpha = 0.5, size = 1)+
+  geom_line(aes(x= date, y=lret, color="lret"), alpha = 0.5, size = 1)+
+  theme_minimal()+
+  labs(
+    title="Return v.s. log Return for MSFT",
+    y="Return",
+    x="Date"
+  )+
+  scale_color_manual(name = "Y series", values = c("ret" = "blue", "lret" = "red"))
+  
+  
+```
+# Q4
+Yuting: I manually separate two worksheet into two excel files.
+
+```{r}
+daily_data <- read_excel("PS1_Daily_HPR_daily.xlsx") %>%
+  janitor::clean_names()%>% 
+  mutate(date = ymd(date))
+skimr::skim(daily_data)
+```
+
+```{r, Question 5, fig.width=12}
+daily_q5 <- daily_data %>%
+  select(-c(xom,jpm,intc,c,vwretd))  %>%
+  mutate(msft1 = msft +1,
+         inv_msft = msft1 * lag(msft1),
+         ge1 = ge +1,
+         inv_ge = ge1 * lag(ge1),
+         sprtrn1 = sprtrn +1,
+         inv_sprtrn = sprtrn1 * lag(sprtrn1)) %>% 
+  mutate(inv_msft = if_else(is.na(inv_msft),1,inv_msft),
+         inv_ge = if_else(is.na(inv_ge),1,inv_ge),
+         inv_sprtrn = if_else(is.na(inv_sprtrn),1,inv_sprtrn)) %>% 
+  select(-msft1,-ge1,-sprtrn1)
+
+daily_q5 %>% 
+  ggplot() +
+  geom_line(aes(x= date, y=inv_msft, color="msft"), alpha = 0.5, size = 1)+
+  geom_line(aes(x= date, y=inv_sprtrn, color="sprtrn"), alpha = 0.5, size = 1)+
+  geom_line(aes(x= date, y=inv_ge, color="ge"),alpha = 0.5, size = 1)+
+  theme_minimal()+
+  labs(
+    title="Investment for MSFT, GE, S&P 500",
+    y="Investment return",
+    x="Date"
+  )+
+  scale_color_manual(name = "Y series", values = c("msft" = "blue", "sprtrn" = "green","ge"="red"))
+
+```
+
+```{r q6}
+daily_log <-daily_data %>% pivot_longer(!date,names_to = "ticker",values_to = "ret")%>% 
+  filter(ret > 0) %>% mutate(lret = log(ret))
+
+sum_table_daily <-  daily_log %>% 
+  group_by(ticker) %>% 
+  summarise(ret_mean = mean(ret),
+            logret_mean = mean(lret, na.rm = TRUE),
+            ret_var = var(ret),
+            logret_var = var(lret, na.rm = TRUE),
+            ret_skew = skewness(ret),
+            logret_skew = skewness(lret, na.rm = TRUE),
+            ret_kur = kurtosis(ret),
+            logret_kur = kurtosis(lret, na.rm = TRUE))
+sum_table_daily
+```
+
