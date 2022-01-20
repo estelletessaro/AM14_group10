@@ -149,6 +149,7 @@ daily_q5 %>%
 
 ```
 
+
 ```{r q6}
 daily_log <-daily_data %>% pivot_longer(!date,names_to = "ticker",values_to = "ret")%>% 
   filter(ret > 0) %>% mutate(lret = log(ret))
@@ -166,10 +167,7 @@ sum_table_daily <-  daily_log %>%
 sum_table_daily
 ```
 
-```{r}
-daily_log
-```
-# Question 7
+## Question 7
 
 ```{r q7-1}
 #MSFT
@@ -251,4 +249,40 @@ daily_log %>%
 ```
 
 # Question 8
+
+Hovik: use MSFT, GE and JPM
+
+```{r}
+daily_q8_ret <- daily_data %>%
+  select(-c(xom,intc,c,vwretd))  %>%
+  pivot_longer(!date,names_to = "ticker",values_to = "ret")%>% 
+  filter(ret > 0) %>% 
+  mutate(lret = log(ret))
+
+daily_q8_inv <-  daily_data %>%
+         select(-c(xom,intc,c,vwretd))  %>%
+         mutate(msft1 = msft +1,
+         inv_msft = msft1 * lag(msft1),
+         ge1 = ge +1,
+         inv_ge = ge1 * lag(ge1),
+         sprtrn1 = sprtrn +1,
+         inv_sprtrn = sprtrn1 * lag(sprtrn1),
+         jpm1 = jpm +1,
+         inv_jpm = jpm1 * lag(jpm1),) %>% 
+  mutate(inv_msft = if_else(is.na(inv_msft),1,inv_msft),
+         inv_ge = if_else(is.na(inv_ge),1,inv_ge),
+         inv_jpm = if_else(is.na(inv_jpm),1,inv_jpm),
+         inv_sprtrn = if_else(is.na(inv_sprtrn),1,inv_sprtrn)) %>% 
+  select(-msft1,-ge1,-sprtrn1,-jpm1,-msft,-ge,-sprtrn,-jpm) %>%
+  mutate(msft = inv_msft, ge = inv_ge, sprtrn = inv_sprtrn, jpm = inv_jpm) %>%
+  select(-inv_msft,-inv_ge,-inv_sprtrn,-inv_jpm) %>%
+  pivot_longer(!date,names_to = "ticker",values_to = "inv")
+  
+daily_q8 <- left_join(daily_q8_ret, daily_q8_inv)
+daily_q8
+```
+
+# Question 9
+
+
 
