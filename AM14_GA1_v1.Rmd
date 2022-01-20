@@ -109,6 +109,7 @@ monthly_log %>% filter(ticker == "MSFT") %>%
   
   
 ```
+
 # Q4
 Yuting: I manually separate two worksheet into two excel files.
 
@@ -164,4 +165,90 @@ sum_table_daily <-  daily_log %>%
             logret_kur = kurtosis(lret, na.rm = TRUE))
 sum_table_daily
 ```
+
+```{r}
+daily_log
+```
+# Question 7
+
+```{r q7-1}
+#MSFT
+#Monthly log returns
+monthly_log %>%
+  filter(ticker == "MSFT") %>%
+  select(lret) %>%
+  ggplot(aes(x = lret)) +
+  geom_histogram(binwidth = 0.01) +
+  stat_function(fun = dnorm,
+                args = list(mean = mean(monthly_log$lret),
+                            sd = sd(monthly_log$lret)),
+                col = "#1b98e0",
+                size = 1) +
+  theme_bw() +
+  labs(
+    title = "Microsoft - Histogram of Log Monthly Returns",
+    x = "Log Monthly Returns",
+    y = "Density"
+  )
+
+#Daily log returns
+daily_log %>%
+  filter(ticker == "msft") %>%
+  ggplot(aes(x = lret)) +
+  geom_histogram(binwidth = 0.01) +
+  stat_function(fun = dnorm,
+                args = list(mean = mean(daily_log$lret),
+                            sd = sd(daily_log$lret)),
+                col = "#1b98e0",
+                size = 1) +
+  theme_bw() +
+  labs(
+    title = "Microsoft -  Histogram of Log Daily Returns",
+    x = "Log Daily Returns",
+    y = "Density"
+  )
+
+# While both graphs are leptokurtic (more values centered around the mean; higher bell)
+# daily log returns by far have the highest kurtosis
+```
+
+
+```{r q7-2}
+#General Electric
+monthly_log %>%
+  filter(ticker == "GE") %>%
+  select(lret) %>%
+  ggplot(aes(x = lret)) +
+  geom_histogram(binwidth = 0.01) +
+  stat_function(fun = dnorm,
+                args = list(mean = mean(monthly_log$lret),
+                            sd = sd(monthly_log$lret)),
+                col = "#1b98e0",
+                size = 1) +
+  theme_bw() +
+  labs(
+    title = "General Electric - Histogram of Log Monthly Returns",
+    x = "Log Monthly Returns",
+    y = "Density"
+  )
+
+#Daily log returns
+daily_log %>%
+  filter(ticker == "ge") %>%
+  ggplot(aes(x = lret)) +
+  geom_histogram(binwidth = 0.01) +
+  stat_function(fun = dnorm,
+                args = list(mean = mean(daily_log$lret),
+                            sd = sd(daily_log$lret)),
+                col = "#1b98e0",
+                size = 1) +
+  theme_bw() +
+  labs(
+    title = "General Electric - Histogram of Log Daily Returns",
+    x = "Log Daily Returns",
+    y = "Density"
+  )
+```
+
+# Question 8
 
