@@ -97,12 +97,23 @@ monthly_q2 %>% filter(ticker == "GE") %>%
 
 
 ## Question 3
-yuting: since some return < 0, I filter out them
+
+Here, we generate a new variable that contains log returns (LRET) - we calculate 
+sample statistics for these log returns and then plot the normal returns against 
+the log returns for "MSFT". 
 
 ```{r}
-monthly_log <- monthly_data %>% filter(ret > 0) %>% mutate(lret = log(ret)) 
+monthly_log <- monthly_data %>% 
+  # Filter out entries where returns < 0 - you cannot take a log of a negative
+  filter(ret > 0) %>% 
+  # Create a log return column 'lret' which takes the log of the return
+  mutate(lret = log(ret)) 
+
+# Create a new dataframe for the summary statistics we calculate
 sum_table_monthly <- monthly_log %>% 
+  # Group by the 'ticker' so we can calculate statistics for each one
   group_by(ticker) %>% 
+  # Use the summarise function to calculate different sample statistics
   summarise(ret_mean = mean(ret),
             logret_mean = mean(lret, na.rm = TRUE),
             ret_var = var(ret),
@@ -111,20 +122,26 @@ sum_table_monthly <- monthly_log %>%
             logret_skew = skewness(lret, na.rm = TRUE),
             ret_kur = kurtosis(ret),
             logret_kur = kurtosis(lret, na.rm = TRUE))
+
+# Output the new calculated sample statistics 
 sum_table_monthly
 
-monthly_log %>% filter(ticker == "MSFT") %>%
+monthly_log %>% 
+  # Filter out "MSFT" from our 'monthly log' dataframe so that we can plot
+  filter(ticker == "MSFT") %>%
+  # Call ggplot
   ggplot() +
+  # Create line plots for both log returns and normal returns - differentiated by colour
   geom_line(aes(x= date, y=ret, color="ret"), alpha = 0.5, size = 1)+
   geom_line(aes(x= date, y=lret, color="lret"), alpha = 0.5, size = 1)+
+  # Set the figure theme
   theme_minimal()+
-  labs(
-    title="Return v.s. log Return for MSFT",
+  # Apply labels to the plot
+  labs(title="Return v.s. log Return for MSFT",
     y="Return",
-    x="Date"
-  )+
+    x="Date")+
+  # Assign the appropraite colours to the plot and its legend
   scale_color_manual(name = "Y series", values = c("ret" = "blue", "lret" = "red"))
-  
   
 ```
 
