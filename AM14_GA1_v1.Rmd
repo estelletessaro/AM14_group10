@@ -92,6 +92,9 @@ monthly_q2 %>% filter(ticker == "GE") %>%
   )
 ```
 
+
+
+
 ## Question 3
 yuting: since some return < 0, I filter out them
 
