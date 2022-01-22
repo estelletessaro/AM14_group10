@@ -26,13 +26,27 @@ library(moments)
 Load the monthly stock data. We will also load the daily stock data, which we'll need later in the assignment.
 
 ```{r, Load the data, warning=FALSE}
+# Read in the monthly data using the 'read_excel' function: 
 monthly_data <- read_excel("PS1_Monthly.xlsx") %>%
+  # Perform an initial cleaning of the names in the dataset.
   janitor::clean_names() %>%  
+  # Mutate and transform dates stored in character/numeric vectors to Date objects
   mutate(date = ymd(date))
 
+# Skim the data - this allows us to view specific summary statistics
 skimr::skim(monthly_data)
-
 ```
+
+
+The "PS1_Monthly" data contains information related to the stocks for the following 
+unique companies. 
+
+```{r}
+print(unique(monthly_data$comnam))
+```
+
+
+
 
 
 ## Question 2
