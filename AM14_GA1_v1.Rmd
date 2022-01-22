@@ -50,6 +50,7 @@ print(unique(monthly_data$comnam))
 
 
 ## Question 2
+
 Yuting: Not sure
 
 Now, returns bla bla bla 
