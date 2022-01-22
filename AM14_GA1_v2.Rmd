@@ -1,0 +1,461 @@
+---
+title: "AM14_GA1"
+author: "Group 10"
+date: "1/10/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load libraries 
+
+```{r, Load libraries}
+library(ggplot2)  
+library(dplyr)
+library(tidyverse)
+library(readxl)
+library(lubridate)
+library(skimr)
+library(moments)
+```
+
+## Question 1
+
+Load the monthly stock data. We will also load the daily stock data, which we'll need later in the assignment.
+
+```{r, Load the data, warning=FALSE}
+# Read in the monthly data using the 'read_excel' function: 
+monthly_data <- read_excel("PS1_Monthly.xlsx") %>%
+  # Perform an initial cleaning of the names in the dataset.
+  janitor::clean_names() %>%  
+  # Mutate and transform dates stored in character/numeric vectors to Date objects
+  mutate(date = ymd(date))
+
+# Skim the data - this allows us to view specific summary statistics
+skimr::skim(monthly_data)
+```
+
+
+The "PS1_Monthly" data contains information related to the stocks for the following 
+unique companies. 
+
+```{r}
+print(unique(monthly_data$comnam))
+```
+
+
+
+
+
+## Question 2
+
+Yuting: Not sure
+
+Now, returns bla bla bla 
+
+Also - upon inspection, the dates are not in the right format and need to be transformed. 
+
+```{r, Question 2}
+question2 <- c('MSFT', 'GE')
+
+monthly_q2 <- monthly_data %>%
+  filter(ticker %in% question2) %>% 
+  mutate(ret1 = ret +1,
+         inv_ret = if_else(ret1 == 1, 1, ret1 * lag(ret1)),
+         retx1 = retx +1,
+         inv_retx = if_else(retx1 == 1, 1, retx1 * lag(retx1)),
+         sprtrn1 = sprtrn +1,
+         inv_sprtrn = if_else(sprtrn1 == 1, 1, sprtrn1 * lag(sprtrn1))) %>% 
+  select(-ret1,-retx1,-sprtrn1)
+
+monthly_q2 %>% filter(ticker == "MSFT") %>% 
+  ggplot(aes(x=date)) +
+  geom_line(aes(y=inv_ret), color="red", alpha = 0.5, size = 1)+
+  geom_line(aes(y=inv_retx), color="blue",alpha = 0.5, size = 1)+
+  theme_minimal()+
+  labs(
+    title="Investment without dividends for MSFT",
+    y="Investment return",
+    x="Date"
+  )
+
+monthly_q2 %>% filter(ticker == "GE") %>% 
+  ggplot(aes(x=date)) +
+  geom_line(aes(y=inv_ret), color="red", alpha = 0.5, size = 1)+
+  geom_line(aes(y=inv_retx), color="blue",alpha = 0.5, size = 1)+
+  theme_minimal()+
+  labs(
+    title="Investment without dividends for GE",
+    y="Investment return",
+    x="Date"
+  )
+```
+
+
+
+
+## Question 3
+yuting: since some return < 0, I filter out them
+
+```{r}
+monthly_log <- monthly_data %>% filter(ret > 0) %>% mutate(lret = log(ret)) 
+sum_table_monthly <- monthly_log %>% 
+  group_by(ticker) %>% 
+  summarise(ret_mean = mean(ret),
+            logret_mean = mean(lret, na.rm = TRUE),
+            ret_var = var(ret),
+            logret_var = var(lret, na.rm = TRUE),
+            ret_skew = skewness(ret),
+            logret_skew = skewness(lret, na.rm = TRUE),
+            ret_kur = kurtosis(ret),
+            logret_kur = kurtosis(lret, na.rm = TRUE))
+sum_table_monthly
+
+monthly_log %>% filter(ticker == "MSFT") %>%
+  ggplot() +
+  geom_line(aes(x= date, y=ret, color="ret"), alpha = 0.5, size = 1)+
+  geom_line(aes(x= date, y=lret, color="lret"), alpha = 0.5, size = 1)+
+  theme_minimal()+
+  labs(
+    title="Return v.s. log Return for MSFT",
+    y="Return",
+    x="Date"
+  )+
+  scale_color_manual(name = "Y series", values = c("ret" = "blue", "lret" = "red"))
+  
+  
+```
+
+# Q4
+Yuting: I manually separate two worksheet into two excel files.
+
+```{r}
+daily_data <- read_excel("PS1_Daily.xlsx", sheet = "HPR_daily", skip = 1) %>%
+  janitor::clean_names()%>% 
+  mutate(date = ymd(date))
+skimr::skim(daily_data)
+```
+
+```{r, Question 5, fig.width=12}
+daily_q5 <- daily_data %>%
+  select(-c(xom,jpm,intc,c,vwretd))  %>%
+  mutate(msft1 = msft +1,
+         inv_msft = msft1 * lag(msft1),
+         ge1 = ge +1,
+         inv_ge = ge1 * lag(ge1),
+         sprtrn1 = sprtrn +1,
+         inv_sprtrn = sprtrn1 * lag(sprtrn1)) %>% 
+  mutate(inv_msft = if_else(is.na(inv_msft),1,inv_msft),
+         inv_ge = if_else(is.na(inv_ge),1,inv_ge),
+         inv_sprtrn = if_else(is.na(inv_sprtrn),1,inv_sprtrn)) %>% 
+  select(-msft1,-ge1,-sprtrn1)
+
+daily_q5 %>% 
+  ggplot() +
+  geom_line(aes(x= date, y=inv_msft, color="msft"), alpha = 0.5, size = 1)+
+  geom_line(aes(x= date, y=inv_sprtrn, color="sprtrn"), alpha = 0.5, size = 1)+
+  geom_line(aes(x= date, y=inv_ge, color="ge"),alpha = 0.5, size = 1)+
+  theme_minimal()+
+  labs(
+    title="Investment for MSFT, GE, S&P 500",
+    y="Investment return",
+    x="Date"
+  )+
+  scale_color_manual(name = "Y series", values = c("msft" = "blue", "sprtrn" = "green","ge"="red"))
+
+```
+
+
+```{r q6}
+daily_log <-daily_data %>% pivot_longer(!date,names_to = "ticker",values_to = "ret")%>% 
+  filter(ret > 0) %>% mutate(lret = log(ret))
+
+sum_table_daily <-  daily_log %>% 
+  group_by(ticker) %>% 
+  summarise(ret_mean = mean(ret),
+            logret_mean = mean(lret, na.rm = TRUE),
+            ret_var = var(ret),
+            logret_var = var(lret, na.rm = TRUE),
+            ret_skew = skewness(ret),
+            logret_skew = skewness(lret, na.rm = TRUE),
+            ret_kur = kurtosis(ret),
+            logret_kur = kurtosis(lret, na.rm = TRUE))
+sum_table_daily
+```
+
+## Question 7
+
+```{r q7-1}
+#MSFT
+#Monthly log returns
+monthly_log %>%
+  filter(ticker == "MSFT") %>%
+  select(lret) %>%
+  ggplot(aes(x = lret)) +
+  geom_histogram(binwidth = 0.01) +
+  stat_function(fun = dnorm,
+                args = list(mean = mean(monthly_log$lret),
+                            sd = sd(monthly_log$lret)),
+                col = "#1b98e0",
+                size = 1) +
+  theme_bw() +
+  labs(
+    title = "Microsoft - Histogram of Log Monthly Returns",
+    x = "Log Monthly Returns",
+    y = "Density"
+  )
+
+#Daily log returns
+daily_log %>%
+  filter(ticker == "msft") %>%
+  ggplot(aes(x = lret)) +
+  geom_histogram(binwidth = 0.01) +
+  stat_function(fun = dnorm,
+                args = list(mean = mean(daily_log$lret),
+                            sd = sd(daily_log$lret)),
+                col = "#1b98e0",
+                size = 1) +
+  theme_bw() +
+  labs(
+    title = "Microsoft -  Histogram of Log Daily Returns",
+    x = "Log Daily Returns",
+    y = "Density"
+  )
+
+# While both graphs are leptokurtic (more values centered around the mean; higher bell)
+# daily log returns by far have the highest kurtosis
+```
+
+
+```{r q7-2}
+#General Electric
+monthly_log %>%
+  filter(ticker == "GE") %>%
+  select(lret) %>%
+  ggplot(aes(x = lret)) +
+  geom_histogram(binwidth = 0.01) +
+  stat_function(fun = dnorm,
+                args = list(mean = mean(monthly_log$lret),
+                            sd = sd(monthly_log$lret)),
+                col = "#1b98e0",
+                size = 1) +
+  theme_bw() +
+  labs(
+    title = "General Electric - Histogram of Log Monthly Returns",
+    x = "Log Monthly Returns",
+    y = "Density"
+  )
+
+#Daily log returns
+daily_log %>%
+  filter(ticker == "ge") %>%
+  ggplot(aes(x = lret)) +
+  geom_histogram(binwidth = 0.01) +
+  stat_function(fun = dnorm,
+                args = list(mean = mean(daily_log$lret),
+                            sd = sd(daily_log$lret)),
+                col = "#1b98e0",
+                size = 1) +
+  theme_bw() +
+  labs(
+    title = "General Electric - Histogram of Log Daily Returns",
+    x = "Log Daily Returns",
+    y = "Density"
+  )
+```
+
+# Question 8
+
+Hovik: use MSFT, GE and JPM
+
+```{r}
+daily_q8_ret <- daily_data %>%
+  select(-c(xom,intc,c,vwretd))  %>%
+  pivot_longer(!date,names_to = "ticker",values_to = "ret")%>% 
+  filter(ret > 0) %>% 
+  mutate(lret = log(ret))
+
+daily_q8_inv <-  daily_data %>%
+         select(-c(xom,intc,c,vwretd))  %>%
+         mutate(msft1 = msft +1,
+         inv_msft = msft1 * lag(msft1),
+         ge1 = ge +1,
+         inv_ge = ge1 * lag(ge1),
+         sprtrn1 = sprtrn +1,
+         inv_sprtrn = sprtrn1 * lag(sprtrn1),
+         jpm1 = jpm +1,
+         inv_jpm = jpm1 * lag(jpm1),) %>% 
+  mutate(inv_msft = if_else(is.na(inv_msft),1,inv_msft),
+         inv_ge = if_else(is.na(inv_ge),1,inv_ge),
+         inv_jpm = if_else(is.na(inv_jpm),1,inv_jpm),
+         inv_sprtrn = if_else(is.na(inv_sprtrn),1,inv_sprtrn)) %>% 
+  select(-msft1,-ge1,-sprtrn1,-jpm1,-msft,-ge,-sprtrn,-jpm) %>%
+  mutate(msft = inv_msft, ge = inv_ge, sprtrn = inv_sprtrn, jpm = inv_jpm) %>%
+  select(-inv_msft,-inv_ge,-inv_sprtrn,-inv_jpm) %>%
+  pivot_longer(!date,names_to = "ticker",values_to = "inv")
+  
+daily_q8 <- left_join(daily_q8_ret, daily_q8_inv)
+daily_q8
+```
+
+# Question 9
+
+```{r, covariance matrix for log return series}
+
+#Covariance matrix for log returns
+covariance_data_log <- daily_data %>%
+  mutate(
+    msft_log_ret = log(1 + msft),
+    xom_log_ret = log(1 + xom),
+    ge_log_ret = log(1 + ge),
+    jpm_log_ret = log(1 + jpm),
+    intc_log_ret = log(1 + intc),
+    c_log_ret = log(1 + c),
+    )
+
+cov(covariance_data_log %>% 
+      select(msft_log_ret, xom_log_ret, ge_log_ret, jpm_log_ret, intc_log_ret, c_log_ret))
+
+
+#Covariance matrix for returns
+
+cov(covariance_data_log %>% 
+      select(msft, xom, ge, jpm, intc, c))
+
+
+#Covariance matrix for squared returns
+covariance_data_sq_ret <- daily_data %>%
+  mutate(
+    msft_sq_ret = msft**2,
+    xom_sq_ret = xom**2,
+    ge_sq_ret = ge**2,
+    jpm_sq_ret = jpm**2,
+    intc_sq_ret = intc**2,
+    c_sq_ret = c**2,
+    )
+
+cov(covariance_data_sq_ret %>% 
+      select(msft_sq_ret, xom_sq_ret, ge_sq_ret, jpm_sq_ret, intc_sq_ret, c_sq_ret))
+```
+
+# Q10
+
+```{r, ACF function}
+#Creating a series for returns
+acf_data <- daily_data %>% 
+  pivot_longer(!date,names_to = "ticker",values_to = "ret")
+
+#ACF function for returns
+acf_data %>% 
+  select(ret) %>% 
+  acf()
+
+#ACF for returns squared
+acf_data %>% 
+  mutate(returns_squared = ret ** 2) %>% 
+  select(returns_squared) %>% 
+  acf()
+
+#ACF for absolute returns
+acf_data %>% 
+  mutate(abs_returns = abs(ret)) %>% 
+  select(abs_returns) %>% 
+  acf()
+```
+
+
+
+# Q11
+
+```{r, portfolio}
+#Selecting the 3 stocks
+portfolio_data <- daily_data %>%
+  select(date, msft, ge, jpm)
+
+#Assigning weights arbitrarily
+w_msft = 0.4
+w_ge = 0.2
+w_jpm = 0.4
+
+#Portfolio
+portfolio_data <- portfolio_data %>% 
+  mutate(
+    portfolio_returns = 1 + ((w_msft * msft) + (w_ge * ge) + (w_jpm * jpm))
+  )
+```
+
+
+# Q12
+
+```{r, investment growth}
+#Investment growth of $1
+portfolio_data <- portfolio_data %>% 
+  mutate(
+    #Cumulative product of returns
+    investment_growth = cumprod(portfolio_returns)
+  )
+
+
+#Plot of investment growth
+portfolio_data %>% 
+  ggplot() +
+  geom_line(aes(x= date, y=investment_growth)) +
+  theme_minimal()+
+  labs(
+    title="Investment Growth for Portfolio",
+    y="Investment return",
+    x="Date"
+  )
+```
+
+
+
+```{r comparison of portfolio return with individual stocks}
+return_data <- daily_data %>%
+  #Selecting relevant columns
+  select(c(date, msft, jpm, ge))  %>%
+  
+  #Calculating returns
+  mutate(msft_ret = msft + 1,
+         inv_msft = cumprod(msft_ret),
+         
+         ge_ret = ge +1,
+         inv_ge = cumprod(ge_ret),
+         
+         jpm_ret = jpm +1,
+         inv_jpm = cumprod(jpm_ret)) %>% 
+  select(date, inv_msft, inv_ge, inv_jpm)
+
+#Joining data of individual stocks with portfolio
+comparison_data <- return_data %>% 
+  inner_join(portfolio_data %>% select(date, investment_growth), by = "date")
+
+#Plotting returns for all
+comparison_data %>% 
+  ggplot() +
+  geom_line(aes(x= date, y=inv_msft, color="msft"), alpha = 0.5, size = 1)+
+  geom_line(aes(x= date, y=inv_jpm, color="jpm"), alpha = 0.5, size = 1)+
+  geom_line(aes(x= date, y=inv_ge, color="ge"),alpha = 0.5, size = 1)+
+  geom_line(aes(x= date, y=investment_growth, color="portfolio"),alpha = 0.5, size = 1)+
+  theme_minimal()+
+  labs(
+    title="Comparison for investment growth of portfolio vs individual stocks",
+    y="Investment return",
+    x="Date"
+  )+
+  scale_color_manual(name = "Y series", values = c("msft" = "blue", "ge" = "green","jpm"="red", "portfolio"="orange"))
+```
+
+
+
+
+
+
+
+
+
+
+
+
