@@ -111,10 +111,8 @@ the log returns for "MSFT".
 
 ```{r}
 monthly_log <- monthly_data %>% 
-  # Filter out entries where returns < 0 - you cannot take a log of a negative
-  filter(ret > 0) %>% 
   # Create a log return column 'lret' which takes the log of the return
-  mutate(lret = log(ret)) 
+  mutate(lret = log(1+ret)) 
 
 # Create a new dataframe for the summary statistics we calculate
 sum_table_monthly <- monthly_log %>% 
@@ -170,19 +168,19 @@ for "MSFT".
 
 
 # Q4
-Yuting: I manually separate two worksheet into two excel files.
+
 
 ```{r}
-daily_data <- read_excel("PS1_Daily_HPR_daily.xlsx") %>%
+daily_data <- read_excel("PS1_Daily.xlsx", sheet = "HPR_daily", skip = 1) %>%
   janitor::clean_names()%>% 
-  mutate(date = ymd(date))%>% pivot_longer(!date,names_to = "ticker",values_to = "ret")
+  mutate(date = ymd(date))
 skimr::skim(daily_data)
 ```
 
 ```{r, Question 5}
 question5 <- c('msft', 'ge',"sprtrn")
 
-daily_q5 <- daily_data %>%
+daily_q5 <- daily_data %>% pivot_longer(!date,names_to = "ticker",values_to = "ret") %>%
   filter(ticker %in% question5) %>%
   group_by(ticker) %>% 
   arrange(ticker,date) %>% 
@@ -204,8 +202,8 @@ daily_q5 %>%
 
 
 ```{r q6}
-daily_log <-daily_data %>% 
-  filter(ret > 0) %>% mutate(lret = log(ret))
+daily_log <-daily_data %>% pivot_longer(!date,names_to = "ticker",values_to = "ret") %>% 
+  mutate(lret = log(1+ret))
 
 sum_table_daily <-  daily_log %>% 
   group_by(ticker) %>% 
@@ -309,8 +307,7 @@ Hovik: use MSFT, GE and JPM
 daily_q8_ret <- daily_data %>%
   select(-c(xom,intc,c,vwretd))  %>%
   pivot_longer(!date,names_to = "ticker",values_to = "ret")%>% 
-  filter(ret > 0) %>% 
-  mutate(lret = log(ret))
+  mutate(lret = log(1+ret))
 
 daily_q8_inv <-  daily_data %>%
          select(-c(xom,intc,c,vwretd))  %>%
@@ -336,6 +333,150 @@ daily_q8
 ```
 
 # Question 9
+```{r, covariance matrix for log return series}
 
+#Covariance matrix for log returns
+covariance_data_log <- daily_data %>%
+  mutate(
+    msft_log_ret = log(1 + msft),
+    xom_log_ret = log(1 + xom),
+    ge_log_ret = log(1 + ge),
+    jpm_log_ret = log(1 + jpm),
+    intc_log_ret = log(1 + intc),
+    c_log_ret = log(1 + c),
+    )
+
+cov(covariance_data_log %>% 
+      select(msft_log_ret, xom_log_ret, ge_log_ret, jpm_log_ret, intc_log_ret, c_log_ret))
+
+
+#Covariance matrix for returns
+
+cov(covariance_data_log %>% 
+      select(msft, xom, ge, jpm, intc, c))
+
+
+#Covariance matrix for squared returns
+covariance_data_sq_ret <- daily_data %>%
+  mutate(
+    msft_sq_ret = msft**2,
+    xom_sq_ret = xom**2,
+    ge_sq_ret = ge**2,
+    jpm_sq_ret = jpm**2,
+    intc_sq_ret = intc**2,
+    c_sq_ret = c**2,
+    )
+
+cov(covariance_data_sq_ret %>% 
+      select(msft_sq_ret, xom_sq_ret, ge_sq_ret, jpm_sq_ret, intc_sq_ret, c_sq_ret))
+```
+
+# Q10
+
+```{r, ACF function}
+#Creating a series for returns
+acf_data <- daily_data %>% 
+  pivot_longer(!date,names_to = "ticker",values_to = "ret")
+
+#ACF function for returns
+acf_data %>% 
+  select(ret) %>% 
+  acf()
+
+#ACF for returns squared
+acf_data %>% 
+  mutate(returns_squared = ret ** 2) %>% 
+  select(returns_squared) %>% 
+  acf()
+
+#ACF for absolute returns
+acf_data %>% 
+  mutate(abs_returns = abs(ret)) %>% 
+  select(abs_returns) %>% 
+  acf()
+```
+
+
+
+# Q11
+
+```{r, portfolio}
+#Selecting the 3 stocks
+portfolio_data <- daily_data %>%
+  select(date, msft, ge, jpm)
+
+#Assigning weights arbitrarily
+w_msft = 0.4
+w_ge = 0.2
+w_jpm = 0.4
+
+#Portfolio
+portfolio_data <- portfolio_data %>% 
+  mutate(
+    portfolio_returns = 1 + ((w_msft * msft) + (w_ge * ge) + (w_jpm * jpm))
+  )
+```
+
+
+# Q12
+
+```{r, investment growth}
+#Investment growth of $1
+portfolio_data <- portfolio_data %>% 
+  mutate(
+    #Cumulative product of returns
+    investment_growth = cumprod(portfolio_returns)
+  )
+
+
+#Plot of investment growth
+portfolio_data %>% 
+  ggplot() +
+  geom_line(aes(x= date, y=investment_growth)) +
+  theme_minimal()+
+  labs(
+    title="Investment Growth for Portfolio",
+    y="Investment return",
+    x="Date"
+  )
+```
+
+
+
+```{r comparison of portfolio return with individual stocks}
+return_data <- daily_data %>%
+  #Selecting relevant columns
+  select(c(date, msft, jpm, ge))  %>%
+  
+  #Calculating returns
+  mutate(msft_ret = msft + 1,
+         inv_msft = cumprod(msft_ret),
+         
+         ge_ret = ge +1,
+         inv_ge = cumprod(ge_ret),
+         
+         jpm_ret = jpm +1,
+         inv_jpm = cumprod(jpm_ret)) %>% 
+  select(date, inv_msft, inv_ge, inv_jpm)
+
+#Joining data of individual stocks with portfolio
+comparison_data <- return_data %>% 
+  inner_join(portfolio_data %>% select(date, investment_growth), by = "date")
+
+#Plotting returns for all
+comparison_data %>% 
+  ggplot() +
+  geom_line(aes(x= date, y=inv_msft, color="msft"), alpha = 0.5, size = 1)+
+  geom_line(aes(x= date, y=inv_jpm, color="jpm"), alpha = 0.5, size = 1)+
+  geom_line(aes(x= date, y=inv_ge, color="ge"),alpha = 0.5, size = 1)+
+  geom_line(aes(x= date, y=investment_growth, color="portfolio"),alpha = 0.5, size = 1)+
+  theme_minimal()+
+  labs(
+    title="Comparison for investment growth of portfolio vs individual stocks",
+    y="Investment return",
+    x="Date"
+  )+
+  scale_color_manual(name = "Y series", values = c("msft" = "blue", "ge" = "green","jpm"="red", "portfolio"="orange"))
+```
 
 
