@@ -61,36 +61,42 @@ Also - upon inspection, the dates are not in the right format and need to be tra
 question2 <- c('MSFT', 'GE')
 
 monthly_q2 <- monthly_data %>%
-  filter(ticker %in% question2) %>% 
-  mutate(ret1 = ret +1,
-         inv_ret = if_else(ret1 == 1, 1, ret1 * lag(ret1)),
+  filter(ticker %in% question2) %>%
+  group_by(ticker) %>% 
+  mutate(ret1 = ret+1,
          retx1 = retx +1,
-         inv_retx = if_else(retx1 == 1, 1, retx1 * lag(retx1)),
-         sprtrn1 = sprtrn +1,
-         inv_sprtrn = if_else(sprtrn1 == 1, 1, sprtrn1 * lag(sprtrn1))) %>% 
+         sprtrn1 = sprtrn +1) %>% 
+  mutate(inv_ret = cumprod(ret1),
+         inv_retx = cumprod(retx1),
+         inv_sprtrn = cumprod(sprtrn1)) %>% 
   select(-ret1,-retx1,-sprtrn1)
 
 monthly_q2 %>% filter(ticker == "MSFT") %>% 
-  ggplot(aes(x=date)) +
-  geom_line(aes(y=inv_ret), color="red", alpha = 0.5, size = 1)+
-  geom_line(aes(y=inv_retx), color="blue",alpha = 0.5, size = 1)+
+  ggplot() +
+  geom_line(aes(x = date, y=inv_ret, color="With dividend"), alpha = 0.5, size = 1)+
+  geom_line(aes(x = date, y=inv_retx, color="Without dividend"),alpha = 0.5, size = 1)+
+  geom_line(aes(x = date, y=inv_sprtrn, color="S&P 500"),alpha = 0.5, size = 1)+
   theme_minimal()+
   labs(
-    title="Investment without dividends for MSFT",
+    title="Investment with versus without dividends for MSFT",
     y="Investment return",
     x="Date"
-  )
+  )+
+  scale_color_manual(name = "Y series", values = c("Without dividend" = "blue", "With dividend" = "red","S&P 500" = "green"))
 
 monthly_q2 %>% filter(ticker == "GE") %>% 
-  ggplot(aes(x=date)) +
-  geom_line(aes(y=inv_ret), color="red", alpha = 0.5, size = 1)+
-  geom_line(aes(y=inv_retx), color="blue",alpha = 0.5, size = 1)+
+  ggplot() +
+  geom_line(aes(x = date, y=inv_ret, color="With dividend"), alpha = 0.5, size = 1)+
+  geom_line(aes(x = date, y=inv_retx, color="Without dividend"),alpha = 0.5, size = 1)+
+  geom_line(aes(x = date, y=inv_sprtrn, color="S&P 500"),alpha = 0.5, size = 1)+
   theme_minimal()+
   labs(
-    title="Investment without dividends for GE",
+    title="Investment with versus without dividends for GE",
     y="Investment return",
     x="Date"
-  )
+  )+
+  scale_color_manual(name = "Y series", values = c("Without dividend" = "blue", "With dividend" = "red","S&P 500" = "green"))
+
 ```
 
 
@@ -151,42 +157,36 @@ Yuting: I manually separate two worksheet into two excel files.
 ```{r}
 daily_data <- read_excel("PS1_Daily_HPR_daily.xlsx") %>%
   janitor::clean_names()%>% 
-  mutate(date = ymd(date))
+  mutate(date = ymd(date))%>% pivot_longer(!date,names_to = "ticker",values_to = "ret")
 skimr::skim(daily_data)
 ```
 
-```{r, Question 5, fig.width=12}
+```{r, Question 5}
+question5 <- c('msft', 'ge',"sprtrn")
+
 daily_q5 <- daily_data %>%
-  select(-c(xom,jpm,intc,c,vwretd))  %>%
-  mutate(msft1 = msft +1,
-         inv_msft = msft1 * lag(msft1),
-         ge1 = ge +1,
-         inv_ge = ge1 * lag(ge1),
-         sprtrn1 = sprtrn +1,
-         inv_sprtrn = sprtrn1 * lag(sprtrn1)) %>% 
-  mutate(inv_msft = if_else(is.na(inv_msft),1,inv_msft),
-         inv_ge = if_else(is.na(inv_ge),1,inv_ge),
-         inv_sprtrn = if_else(is.na(inv_sprtrn),1,inv_sprtrn)) %>% 
-  select(-msft1,-ge1,-sprtrn1)
+  filter(ticker %in% question5) %>%
+  group_by(ticker) %>% 
+  arrange(ticker,date) %>% 
+  mutate(ret1 = ret+1) %>% 
+  mutate(inv_ret = cumprod(ret1)) %>% 
+  select(-ret1)
 
 daily_q5 %>% 
-  ggplot() +
-  geom_line(aes(x= date, y=inv_msft, color="msft"), alpha = 0.5, size = 1)+
-  geom_line(aes(x= date, y=inv_sprtrn, color="sprtrn"), alpha = 0.5, size = 1)+
-  geom_line(aes(x= date, y=inv_ge, color="ge"),alpha = 0.5, size = 1)+
+  ggplot(aes(x = date, y=inv_ret, group=ticker, color=ticker)) +
+  geom_line()+
   theme_minimal()+
   labs(
-    title="Investment for MSFT, GE, S&P 500",
+    title="Daily Investment",
     y="Investment return",
     x="Date"
-  )+
-  scale_color_manual(name = "Y series", values = c("msft" = "blue", "sprtrn" = "green","ge"="red"))
+  )
 
 ```
 
 
 ```{r q6}
-daily_log <-daily_data %>% pivot_longer(!date,names_to = "ticker",values_to = "ret")%>% 
+daily_log <-daily_data %>% 
   filter(ret > 0) %>% mutate(lret = log(ret))
 
 sum_table_daily <-  daily_log %>% 
