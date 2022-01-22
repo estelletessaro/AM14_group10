@@ -42,6 +42,7 @@ The "PS1_Monthly" data contains information related to the stocks for the follow
 unique companies. 
 
 ```{r}
+# Output all the unique company names
 print(unique(monthly_data$comnam))
 ```
 
@@ -137,13 +138,30 @@ monthly_log %>%
   # Set the figure theme
   theme_minimal()+
   # Apply labels to the plot
-  labs(title="Return v.s. log Return for MSFT",
+  labs(title="Ordinary Return v.s. Log Return for MSFT",
     y="Return",
     x="Date")+
   # Assign the appropraite colours to the plot and its legend
   scale_color_manual(name = "Y series", values = c("ret" = "blue", "lret" = "red"))
   
 ```
+
+As, we can see from the summary statistics, taking the log return seems to 
+exaggerate the key statistics (mean, variance, skew, etc.) associated with the 
+returns. This can be highlighted clearly on the plot which compares the normal
+returns with the log returns for "MSFT". 
+
+Clearly, we can see that there is a significant difference between the ordinary
+returns and the log returns over time. This points towards the returns being 
+non-negligible, with relatively high percentage changes. Ordinary returns and log
+returns are only equal when they are **zero**, and they are approximately equal 
+when they remain small. Therefore, the difference between the ordinary and the log
+returns highlights that these returns are non-negligible - and that there is 
+significant percentage change (which points towards relatively high volatility) 
+for "MSFT".
+
+
+
 
 # Q4
 Yuting: I manually separate two worksheet into two excel files.
