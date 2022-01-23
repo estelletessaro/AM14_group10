@@ -80,7 +80,7 @@ monthly_q2 <- monthly_data %>%
   mutate(inv_ret = cumprod(ret1),
          inv_retx = cumprod(retx1),
          inv_sprtrn = cumprod(sprtrn1)) %>% 
-  # Reverse the inverse for these variables
+  # Remove the dummy variables
   select(-ret1,-retx1,-sprtrn1)
 
 
@@ -106,7 +106,9 @@ monthly_q2 %>%
 
 
 # Call monthly_q2 variable for plotting GE
-monthly_q2 %>% filter(ticker == "GE") %>% 
+monthly_q2 %>% 
+  # Filter out for GE stock
+  filter(ticker == "GE") %>% 
   # Initialise ggplot
   ggplot() +
   # Use the geom_line function to plot GE returns with and without dividends
@@ -199,39 +201,76 @@ for "MSFT".
 # Question 4
 
 In this section we download the data from the PS1_Daily.xlsx file - this contains
-two separate sheets - the first 'HPR_daily" is **downloaded below** and contains 
+two separate sheets - the first 'HPR_daily" is **imported below** and contains 
 the daily holding period for the 6 stocks.
 
 ```{r}
+# Use the read_excel function to import page 1 from the excel file
 daily_data <- read_excel("PS1_Daily.xlsx", sheet = "HPR_daily", skip = 1) %>%
+  # Do an initial cleaning of the names in the dataset
   janitor::clean_names()%>% 
+  # Overwrite the date variable - transform dates stored in character/numeric 
+  # vectors to Date objects
   mutate(date = ymd(date))
+
+# Skim the data to view certain summary statistics
 skimr::skim(daily_data)
 ```
 
-```{r, Question 5}
-question5 <- c('msft', 'ge',"sprtrn")
 
-daily_q5 <- daily_data %>% pivot_longer(!date,names_to = "ticker",values_to = "ret") %>%
+
+
+# Question 5
+
+In this question, we construct a daily total return index for the 'MSFT' and
+'GE' stocks, as well as the S&P500. This allows us to compare the daily total 
+returns index with the monthly total returns index (determined in Q2). 
+
+```{r, Question 5}
+# Assign a new variable that will enable us to filter the data
+question5 <- c('msft', 'ge', "sprtrn")
+
+# Create a new dataframe from which the daily total return index will be determined
+daily_q5 <- daily_data %>% 
+  # Use the pivot longer function 'lengthen the data' - this makes it easier to
+  # filter and plot the data
+  pivot_longer(!date, names_to = "ticker", values_to = "ret") %>%
+  # We filter for the appropriate stocks
   filter(ticker %in% question5) %>%
+  # Group the data by the relevant stocks
   group_by(ticker) %>% 
+  # Arrange the data by stock + within that, arrange the data by date. 
   arrange(ticker,date) %>% 
+  # Mutate new column with the returns (ret + 1)
   mutate(ret1 = ret+1) %>% 
+  # Determine the inverse return by finding the cumulative product of ret1
   mutate(inv_ret = cumprod(ret1)) %>% 
+  # Remove the dummy variables
   select(-ret1)
 
+# Call the new variable so that we can make the plot
 daily_q5 %>% 
+  # Call ggplot and assign the axes, group and color
   ggplot(aes(x = date, y=inv_ret, group=ticker, color=ticker)) +
+  # Use geom_line to plot the data
   geom_line()+
+  # Set the theme of the plot
   theme_minimal()+
-  labs(
-    title="Daily Investment",
+  # Set the labels for the plot
+  labs(title="Daily Investment - Total Return Index",
     y="Investment return",
-    x="Date"
-  )
+    x="Date")
 
 ```
 
+As we can see, the daily return index and the monthly return index follow an 
+almost identical pattern. Close examiniation shows that the daily return index 
+is slightly higher - and this is due to the more regular compounding period. 
+
+
+
+
+# Question 6 
 
 ```{r q6}
 daily_log <-daily_data %>% pivot_longer(!date,names_to = "ticker",values_to = "ret") %>% 
