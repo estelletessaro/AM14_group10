@@ -455,7 +455,11 @@ cov(covariance_data_sq_ret %>%
       select(msft_sq_ret, ge_sq_ret, jpm_sq_ret, sprtrn_sq_ret))
 ```
 
+The covariance matrix can be used to calculate the standard deviation of a portfolio which allows quantifying the risk associated with a particular portfolio of stocks. Covariance is the statistical measure of the directional relationship between two asset returns, which in this case is positive for all of the stocks in the portfolio. This means that the stocks tend to move in the same direction, whether positive or negative (higher return on msft would likely mean that jpm will also have higher returns). In terms of portfolio construction, this knowledge allows finding stocks that complement each other in terms of price movement. Choosing stocks that move inversely would allow reducing the risks as a hedging strategy.
+
+
 # Question 10
+
 
 Here, we plot the autocorrelation functions for the returns, returns squared and absolute returns.
 
@@ -482,6 +486,14 @@ acf_data %>%
   acf()
 ```
 
+The autocorrelation with lag 0 in each ACF plot is equal to 1 as this represents the autocorrelation between each term and itself.
+
+From the first ACF plot of returns, we can note that there is a statistically significant correlation for lags up to 7. This means that when the returns are high, they tend to continue rising for upto 7 days and when the returns are low, they tend to be low for upto 7 days.
+
+The second ACF plot of squared returns shows that there is seasonality in the data. For almost every 8 lag values, the correlation becomes statistically significant. This means that there is a positive linear relationship between the squared returns on days which are approximately 8 days apart. 
+
+The third ACF plot shows a very strong autocorrelation between absolute returns as the correlation with lag values upto 45 are statistically significant. Seasonality can also be observed from the data as there is a spike in autocorrelation for every 8th day. This means that the value of absolute returns has a positive relationship with its past values, with a specially positive relationship with days having a lag value of 8 or its multiples.
+
 
 # Question 11
 
@@ -505,6 +517,8 @@ portfolio_data <- portfolio_data %>%
 ```
 
 By keeping the stock weights set over time, we are not accounting for changes in stock prices. If one particular stock soars over time, it would make sense to sell some of those high-performing stocks, locking in that profit and returning the balance of the portfolio to its original weights. However, our portfolio as is does not account for stock price fluctuations.
+
+Therefore, our portfolio is not taking advantage of the growth of certain stocks, as more weight could be allocated to historically high growth stocks that exhibit higher returns (and volatility). For example, if msft stock is undervalued and shows growth prospects, it would make sense to allocate more portfolio weight to it. On the other hand, in a bear market, if stock prices become volatile, it would make sense to allocate more portfolio weight to stocks with less variance that have shown steady returns over time and no large plunges in price.
 
 # Question 12
 
