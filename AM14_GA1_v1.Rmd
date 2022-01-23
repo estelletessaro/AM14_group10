@@ -198,6 +198,9 @@ for "MSFT".
 
 # Question 4
 
+In this section we download the data from the PS1_Daily.xlsx file - this contains
+two separate sheets - the first 'HPR_daily" is **downloaded below** and contains 
+the daily holding period for the 6 stocks.
 
 ```{r}
 daily_data <- read_excel("PS1_Daily.xlsx", sheet = "HPR_daily", skip = 1) %>%
