@@ -79,7 +79,7 @@ monthly_q2 %>% filter(ticker == "MSFT") %>%
   geom_line(aes(x = date, y=inv_sprtrn, color="S&P 500"),alpha = 0.5, size = 1)+
   theme_minimal()+
   labs(
-    title="Investment with versus without dividends for MSFT",
+    title="Investment with/without dividends for MSFT",
     y="Investment return",
     x="Date"
   )+
@@ -92,7 +92,7 @@ monthly_q2 %>% filter(ticker == "GE") %>%
   geom_line(aes(x = date, y=inv_sprtrn, color="S&P 500"),alpha = 0.5, size = 1)+
   theme_minimal()+
   labs(
-    title="Investment with versus without dividends for GE",
+    title="Investment with/without dividends for GE",
     y="Investment return",
     x="Date"
   )+
