@@ -125,7 +125,10 @@ monthly_q2 %>% filter(ticker == "GE") %>%
 
 ```
 
-
+As we can see, the peaks and troughs for all plots are somewhat aligned. 
+This shows that all of these stocks/indices follow similar behavioral 
++ investing trends. As expected, we can also see that the investment 
+returns **with** dividends will be higher than those **without** dividends.
 
 
 
