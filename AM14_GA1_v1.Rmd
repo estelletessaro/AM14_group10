@@ -566,3 +566,18 @@ comparison_data %>%
 
 Plotting our portfolio returns with the individual stock returns over time, we notice several things. By creating a portfolio, we've generated more return than if we had invested in GE and JPM alone. However, we've created less value than if we had invested solely in MSFT.
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
