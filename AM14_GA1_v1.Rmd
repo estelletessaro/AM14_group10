@@ -41,7 +41,7 @@ skimr::skim(monthly_data)
 The "PS1_Monthly" data contains information related to the stocks for the following 
 unique companies. 
 
-```{r}
+```{r Question 1 continued}
 # Output all the unique company names
 print(unique(monthly_data$comnam))
 ```
@@ -50,55 +50,81 @@ print(unique(monthly_data$comnam))
 
 
 
+
 ## Question 2
 
-Yuting: Not sure
+In this section, we use the holding period returns to create a total return index 
+for MSFT + GE stocks, as well as the S&P500 index. We compare the returns 
+where dividends are reinvested, against the returns without dividends for 
+each of these stocks/indices.
 
-Now, returns bla bla bla 
-
-Also - upon inspection, the dates are not in the right format and need to be transformed. 
 
 ```{r, Question 2}
+# Create variable 'question2' which contains the relevant stocks
 question2 <- c('MSFT', 'GE')
 
+# Create a new variable 'monthly_q2' for determining the returns. 
 monthly_q2 <- monthly_data %>%
+  # Use 'question2' variable to filter out for 'MSFT' and 'GE'
   filter(ticker %in% question2) %>%
+  # Group the two 'tickers' above
   group_by(ticker) %>% 
+  # Mutate new columns for the returns (+1)
   mutate(ret1 = ret+1,
          retx1 = retx +1,
          sprtrn1 = sprtrn +1) %>% 
+  # Mutate for the cumulative product of the previous variables to work out the 
+  # the inverse returns - inv_ret accounts for  stock returns with dividends, 
+  # inv_retx accounts for stock returns without dividends, whilst inv_sprtrn
+  # accounts for S&P500 returns. 
   mutate(inv_ret = cumprod(ret1),
          inv_retx = cumprod(retx1),
          inv_sprtrn = cumprod(sprtrn1)) %>% 
+  # Reverse the inverse for these variables
   select(-ret1,-retx1,-sprtrn1)
 
-monthly_q2 %>% filter(ticker == "MSFT") %>% 
+
+# Call monthly_q2 variable for plotting - we first plot MSFT
+monthly_q2 %>% 
+  # Filter for MSFT
+  filter(ticker == "MSFT") %>% 
+  # Initialise ggplot
   ggplot() +
+  # Plot lines for MSFT returns with dividends and without dividends
   geom_line(aes(x = date, y=inv_ret, color="With dividend"), alpha = 0.5, size = 1)+
   geom_line(aes(x = date, y=inv_retx, color="Without dividend"),alpha = 0.5, size = 1)+
+  # Add a line plot for the S&P500 returns
   geom_line(aes(x = date, y=inv_sprtrn, color="S&P 500"),alpha = 0.5, size = 1)+
+  # Set theme for the plot
   theme_minimal()+
-  labs(
-    title="Investment with/without dividends for MSFT",
+  # Assign labels
+  labs(title="Investment with/without dividends for MSFT",
     y="Investment return",
-    x="Date"
-  )+
+    x="Date")+
+  # Assign colours to the keys
   scale_color_manual(name = "Y series", values = c("Without dividend" = "blue", "With dividend" = "red","S&P 500" = "green"))
 
+
+# Call monthly_q2 variable for plotting GE
 monthly_q2 %>% filter(ticker == "GE") %>% 
+  # Initialise ggplot
   ggplot() +
+  # Use the geom_line function to plot GE returns with and without dividends
   geom_line(aes(x = date, y=inv_ret, color="With dividend"), alpha = 0.5, size = 1)+
   geom_line(aes(x = date, y=inv_retx, color="Without dividend"),alpha = 0.5, size = 1)+
+  # Create a line plot of the S&P500 for comparison
   geom_line(aes(x = date, y=inv_sprtrn, color="S&P 500"),alpha = 0.5, size = 1)+
+  # Set theme for the plot
   theme_minimal()+
-  labs(
-    title="Investment with/without dividends for GE",
+  # Apply lables to this second plot
+  labs(title="Investment with/without dividends for GE",
     y="Investment return",
-    x="Date"
-  )+
+    x="Date")+
+  # Assign colours to corresponding lines
   scale_color_manual(name = "Y series", values = c("Without dividend" = "blue", "With dividend" = "red","S&P 500" = "green"))
 
 ```
+
 
 
 
@@ -109,7 +135,7 @@ Here, we generate a new variable that contains log returns (LRET) - we calculate
 sample statistics for these log returns and then plot the normal returns against 
 the log returns for "MSFT". 
 
-```{r}
+```{r Question 3}
 monthly_log <- monthly_data %>% 
   # Create a log return column 'lret' which takes the log of the return
   mutate(lret = log(1+ret)) 
@@ -167,7 +193,7 @@ for "MSFT".
 
 
 
-# Q4
+# Question 4
 
 
 ```{r}
@@ -217,6 +243,9 @@ sum_table_daily <-  daily_log %>%
             logret_kur = kurtosis(lret, na.rm = TRUE))
 sum_table_daily
 ```
+
+
+
 
 ## Question 7
 
