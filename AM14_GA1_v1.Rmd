@@ -47,13 +47,9 @@ print(unique(monthly_data$comnam))
 ```
 
 
-
-
-
-
 ## Question 2
 
-In this section, we use the holding period returns to create a total return index 
+For this question, we use the holding period returns to create a total return index 
 for MSFT + GE stocks, as well as the S&P500 index. We compare the returns 
 where dividends are reinvested, against the returns without dividends for 
 each of these stocks/indices.
@@ -67,7 +63,7 @@ question2 <- c('MSFT', 'GE')
 monthly_q2 <- monthly_data %>%
   # Use 'question2' variable to filter out for 'MSFT' and 'GE'
   filter(ticker %in% question2) %>%
-  # Group the two 'tickers' above
+  # Group the two tickers above
   group_by(ticker) %>% 
   # Mutate new columns for the returns (+1)
   mutate(ret1 = ret+1,
@@ -133,7 +129,6 @@ This shows that all of these stocks/indices follow similar behavioral
 returns **with** dividends will be higher than those **without** dividends.
 
 
-
 ## Question 3
 
 Here, we generate a new variable that contains log returns (LRET) - we calculate 
@@ -147,7 +142,9 @@ monthly_log <- monthly_data %>%
 
 # Create a new dataframe for the summary statistics we calculate
 sum_table_monthly <- monthly_log %>% 
-  # Group by the 'ticker' so we can calculate statistics for each one
+  #filter for stocks we want to calculate statistics for
+  filter(ticker %in% question2) %>%
+  # Group by the ticker so we can calculate statistics for each one
   group_by(ticker) %>% 
   # Use the summarise function to calculate different sample statistics
   summarise(ret_mean = mean(ret),
@@ -159,7 +156,6 @@ sum_table_monthly <- monthly_log %>%
             ret_kur = kurtosis(ret),
             logret_kur = kurtosis(lret, na.rm = TRUE))
 
-# Output the new calculated sample statistics 
 sum_table_monthly
 
 monthly_log %>% 
@@ -194,7 +190,6 @@ when they remain small. Therefore, the difference between the ordinary and the l
 returns highlights that these returns are non-negligible - and that there is 
 significant percentage change (which points towards relatively high volatility) 
 for "MSFT".
-
 
 
 
@@ -264,20 +259,25 @@ daily_q5 %>%
 ```
 
 As we can see, the daily return index and the monthly return index follow an 
-almost identical pattern. Close examiniation shows that the daily return index 
+almost identical pattern. Close examination shows that the daily return index 
 is slightly higher - and this is due to the more regular compounding period. 
-
-
 
 
 # Question 6 
 
 ```{r q6}
-daily_log <-daily_data %>% pivot_longer(!date,names_to = "ticker",values_to = "ret") %>% 
+
+#Create new dataframe in which we will use the pivot longer filter to transform the original data. This will make it easier to do our calculations.
+daily_log <-daily_data %>% 
+  pivot_longer(!date,names_to = "ticker",values_to = "ret") %>% 
+  #Calculate log returns 
   mutate(lret = log(1+ret))
 
 sum_table_daily <-  daily_log %>% 
+  #Filter out stocks we don't need
+  filter(ticker %in% question5) %>%
   group_by(ticker) %>% 
+  #Calculate all of our summary statistics
   summarise(ret_mean = mean(ret),
             logret_mean = mean(lret, na.rm = TRUE),
             ret_var = var(ret),
@@ -289,14 +289,13 @@ sum_table_daily <-  daily_log %>%
 sum_table_daily
 ```
 
-
+Similarly to the monthly return statistics, taking the log return for the daily data results in slightly more exagerated statistics (mean, variance, kurtosis, etc.).
 
 
 ## Question 7
 
 ```{r q7-1}
-#MSFT
-#Monthly log returns
+#Plot the monthly log returns for MSFT
 monthly_log %>%
   filter(ticker == "MSFT") %>%
   select(lret) %>%
@@ -314,7 +313,7 @@ monthly_log %>%
     y = "Density"
   )
 
-#Daily log returns
+#Plot the daily log returns for MSFT
 daily_log %>%
   filter(ticker == "msft") %>%
   ggplot(aes(x = lret)) +
@@ -331,13 +330,12 @@ daily_log %>%
     y = "Density"
   )
 
-# While both graphs are leptokurtic (more values centered around the mean; higher bell)
-# daily log returns by far have the highest kurtosis
 ```
+While both graphs are leptokurtic, which means they have more values  centered around the mean, ie. higher bell, daily log returns by far have the highest kurtosis. Monthly log returns also have more outliers than daily returns.
 
 
 ```{r q7-2}
-#General Electric
+#Plot the monthly log returns for GE
 monthly_log %>%
   filter(ticker == "GE") %>%
   select(lret) %>%
@@ -355,7 +353,7 @@ monthly_log %>%
     y = "Density"
   )
 
-#Daily log returns
+#Plot the daily log returns for GE
 daily_log %>%
   filter(ticker == "ge") %>%
   ggplot(aes(x = lret)) +
@@ -373,18 +371,25 @@ daily_log %>%
   )
 ```
 
+Similarly for GE as for microsoft, daily log returns have a higher kurtosis than the monthly returns, who also have more outliers. However, monthly log returns for GE are slightly more left-skewed than Microsoft's monthly returns.
+
+
 # Question 8
 
-Hovik: use MSFT, GE and JPM
 
 ```{r}
+#We select returns for MSFT, GE, JPM, as well as for the S&P500
 daily_q8_ret <- daily_data %>%
   select(-c(xom,intc,c,vwretd))  %>%
+  #We pivot the data as to make calculations and plotting easier 
   pivot_longer(!date,names_to = "ticker",values_to = "ret")%>% 
+  #Calculate log returns for all stocks
   mutate(lret = log(1+ret))
 
+#We create other dataframe to calculate holding period returns and total return indices
 daily_q8_inv <-  daily_data %>%
          select(-c(xom,intc,c,vwretd))  %>%
+          #Calculate holding period returns
          mutate(msft1 = msft +1,
          inv_msft = msft1 * lag(msft1),
          ge1 = ge +1,
@@ -393,64 +398,71 @@ daily_q8_inv <-  daily_data %>%
          inv_sprtrn = sprtrn1 * lag(sprtrn1),
          jpm1 = jpm +1,
          inv_jpm = jpm1 * lag(jpm1),) %>% 
+  #Take care of NA values
   mutate(inv_msft = if_else(is.na(inv_msft),1,inv_msft),
          inv_ge = if_else(is.na(inv_ge),1,inv_ge),
          inv_jpm = if_else(is.na(inv_jpm),1,inv_jpm),
          inv_sprtrn = if_else(is.na(inv_sprtrn),1,inv_sprtrn)) %>% 
+  #Delete dummy variables
   select(-msft1,-ge1,-sprtrn1,-jpm1,-msft,-ge,-sprtrn,-jpm) %>%
+  #Rename columns to make it easier for interpretaion
   mutate(msft = inv_msft, ge = inv_ge, sprtrn = inv_sprtrn, jpm = inv_jpm) %>%
+  #Delete obsolete columns
   select(-inv_msft,-inv_ge,-inv_sprtrn,-inv_jpm) %>%
+  #Pivot longer to make calculations and plotting easier 
   pivot_longer(!date,names_to = "ticker",values_to = "inv")
   
+#Join both of the dataframes we just created
 daily_q8 <- left_join(daily_q8_ret, daily_q8_inv)
 daily_q8
 ```
 
+
 # Question 9
+
+For this question, we will calculate the covariance matrix for the log return series for the stocks we picked above.
+
 ```{r, covariance matrix for log return series}
 
 #Covariance matrix for log returns
 covariance_data_log <- daily_data %>%
   mutate(
     msft_log_ret = log(1 + msft),
-    xom_log_ret = log(1 + xom),
     ge_log_ret = log(1 + ge),
     jpm_log_ret = log(1 + jpm),
-    intc_log_ret = log(1 + intc),
-    c_log_ret = log(1 + c),
+    sprtrn_log_ret = log(1 + sprtrn)
     )
 
 cov(covariance_data_log %>% 
-      select(msft_log_ret, xom_log_ret, ge_log_ret, jpm_log_ret, intc_log_ret, c_log_ret))
+      select(msft_log_ret, ge_log_ret, jpm_log_ret, sprtrn_log_ret))
 
 
-#Covariance matrix for returns
-
+#Covariance matrix for normal returns
 cov(covariance_data_log %>% 
-      select(msft, xom, ge, jpm, intc, c))
+      select(msft, ge, jpm, sprtrn))
 
 
 #Covariance matrix for squared returns
 covariance_data_sq_ret <- daily_data %>%
   mutate(
     msft_sq_ret = msft**2,
-    xom_sq_ret = xom**2,
     ge_sq_ret = ge**2,
     jpm_sq_ret = jpm**2,
-    intc_sq_ret = intc**2,
-    c_sq_ret = c**2,
+    sprtrn_sq_ret = sprtrn**2
     )
 
 cov(covariance_data_sq_ret %>% 
-      select(msft_sq_ret, xom_sq_ret, ge_sq_ret, jpm_sq_ret, intc_sq_ret, c_sq_ret))
+      select(msft_sq_ret, ge_sq_ret, jpm_sq_ret, sprtrn_sq_ret))
 ```
 
-# Q10
+# Question 10
+
+Here, we plot the autocorrelation functions for the returns, returns squared and absolute returns.
 
 ```{r, ACF function}
 #Creating a series for returns
 acf_data <- daily_data %>% 
-  pivot_longer(!date,names_to = "ticker",values_to = "ret")
+  pivot_longer(!date,names_to = "ticker",values_to = "ret") #pivot longer to make calculations easier
 
 #ACF function for returns
 acf_data %>% 
@@ -471,8 +483,9 @@ acf_data %>%
 ```
 
 
+# Question 11
 
-# Q11
+Now, we'll make up a portfolio with the three stocks we chose above. We're assigning arbitrary weights to them. 
 
 ```{r, portfolio}
 #Selecting the 3 stocks
@@ -484,15 +497,16 @@ w_msft = 0.4
 w_ge = 0.2
 w_jpm = 0.4
 
-#Portfolio
+#Create portfolio
 portfolio_data <- portfolio_data %>% 
   mutate(
     portfolio_returns = 1 + ((w_msft * msft) + (w_ge * ge) + (w_jpm * jpm))
   )
 ```
 
+By keeping the stock weights set over time, we are not accounting for changes in stock prices. If one particular stock soars over time, it would make sense to sell some of those high-performing stocks, locking in that profit and returning the balance of the portfolio to its original weights. However, our portfolio as is does not account for stock price fluctuations.
 
-# Q12
+# Question 12
 
 ```{r, investment growth}
 #Investment growth of $1
@@ -501,7 +515,6 @@ portfolio_data <- portfolio_data %>%
     #Cumulative product of returns
     investment_growth = cumprod(portfolio_returns)
   )
-
 
 #Plot of investment growth
 portfolio_data %>% 
@@ -515,20 +528,18 @@ portfolio_data %>%
   )
 ```
 
-
+Overall, we see an upward trend in our portfolio returns, with two dips around 2003 and 2008/9.
 
 ```{r comparison of portfolio return with individual stocks}
+#Calculate needed returns
 return_data <- daily_data %>%
   #Selecting relevant columns
   select(c(date, msft, jpm, ge))  %>%
-  
   #Calculating returns
   mutate(msft_ret = msft + 1,
          inv_msft = cumprod(msft_ret),
-         
          ge_ret = ge +1,
          inv_ge = cumprod(ge_ret),
-         
          jpm_ret = jpm +1,
          inv_jpm = cumprod(jpm_ret)) %>% 
   select(date, inv_msft, inv_ge, inv_jpm)
@@ -553,4 +564,5 @@ comparison_data %>%
   scale_color_manual(name = "Y series", values = c("msft" = "blue", "ge" = "green","jpm"="red", "portfolio"="orange"))
 ```
 
+Plotting our portfolio returns with the individual stock returns over time, we notice several things. By creating a portfolio, we've generated more return than if we had invested in GE and JPM alone. However, we've created less value than if we had invested solely in MSFT.
 
