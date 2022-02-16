@@ -1,0 +1,25 @@
+---
+title: "AM14_GA2"
+author: "Group 10"
+date: "2/16/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load libraries 
+
+```{r, Load libraries}
+library(ggplot2)  
+library(dplyr)
+library(tidyverse)
+library(readxl)
+library(lubridate)
+library(skimr)
+library(moments)
+```
+
+
+## Question 1
