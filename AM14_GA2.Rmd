@@ -12,14 +12,58 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Load libraries 
 
 ```{r, Load libraries}
-library(ggplot2)  
 library(dplyr)
-library(tidyverse)
 library(readxl)
-library(lubridate)
-library(skimr)
-library(moments)
+library(ggplot2)
+library(TTR)
 ```
 
-
 ## Question 1
+
+Pick Microsoft, XOM and GE as the samples.
+
+```{r}
+data_q1 <- readxl::read_excel('PS1_Daily.xlsx',sheet=2)
+LogReturn <- function(vx) return(diff(log(vx)))
+EWMA=function(sigma0,lambda,vs){
+  s=rep(0,length(vs))
+  s0=sigma0
+  s[1]=lambda*s0+(1-lambda)*vs[1]
+  for (i in 2:length(vs)){
+    s[i]=s[i-1]*lambda+lambda*vs[i]
+  }
+  return(s)
+}
+
+mr <- apply(data_q1[,2:8], 2, LogReturn)
+
+# Stock 1. Microsoft
+Microsoft_logreturn<-mr[,1]
+squared_return<-Microsoft_logreturn^2
+volatility1<-SMA(squared_return,n=70)
+sigma0=sqrt(mean(volatility1[71:6300]^2))
+volatility2<-EWMA(0,0.94,squared_return)
+VaR1_MA<-mean(mr[,1])-1.65*volatility1
+VaR1_EWMA<-mean(mr[,1])-1.65*volatility2
+
+# Stock 2. XOM
+squared_return<-mr[,2]^2
+volatility1<-SMA(squared_return,n=70)
+sigma0=sqrt(mean(volatility1[71:6300]^2))
+volatility2<-EWMA(0,0.94,squared_return)
+VaR2_MA<-mean(mr[,2])-1.65*volatility1
+VaR2_EWMA<-mean(mr[,2])-1.65*volatility2
+
+# Stock 3. GE
+squared_return<-mr[,3]^2
+volatility1<-SMA(squared_return,n=70)
+sigma0<-sqrt(mean(volatility1[71:6300]^2))
+volatility2<-EWMA(0,0.94,squared_return)
+VaR3_MA<-mean(mr[,3])-1.65*volatility1
+VaR3_EWMA<-mean(mr[,3])-1.65*volatility2
+```
+
+Comment:
+If we use MA to predict, there are 2941 violatios in stock 1(MSFT), 2967 violations in stock 2(XOM) and 2970 violations in stock 3(GE); If we use EWMA to predict, there are 1648 violatios in stock 1(MSFT), 2198 violations in stock 2(XOM) and 2006 violations in stock 3(GE);
+
+We can conclude that the volatility estimated by EWMA is more accurate and more in line with the actual changes. The risk estimation of VaR is more radical. The negative returns of most markets are less than the estimated results of var. It shows that VaR underestimates the risk of the market.
