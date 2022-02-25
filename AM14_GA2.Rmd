@@ -16,6 +16,8 @@ library(dplyr)
 library(readxl)
 library(ggplot2)
 library(TTR)
+library(tidyverse)
+library(lubridate)
 ```
 
 # Question 1
@@ -77,3 +79,88 @@ Comment:
 After counting the negativerealized market returns that are more extreme than the VaR on this given day. If we use MA to predict, there are 2941 violatios in stock 1(MSFT), 2967 violations in stock 2(XOM) and 2970 violations in stock 3(GE); If we use EWMA to predict, there are 1648 violatios in stock 1(MSFT), 2198 violations in stock 2(XOM) and 2006 violations in stock 3(GE);
 
 We can conclude that the volatility estimated by EWMA is more accurate and more in line with the actual changes. The risk estimation of VaR is more radical. The negative returns of most markets are less than the estimated results of var. It shows that VaR underestimates the risk of the market.
+
+# Question 2
+
+```{r}
+op_prof0 <- read_csv("Portfolios_Formed_on_OP copy.CSV", skip = 24, n_max = 702) %>%
+  # Perform an initial cleaning of the names in the dataset.
+  janitor::clean_names() %>%
+  mutate(date = ym(x1)) %>%
+  select(everything(), -x1)
+
+inv0 <- read_csv("Portfolios_Formed_on_INV copy.CSV", skip = 17, n_max = 702) %>%
+  # Perform an initial cleaning of the names in the dataset.
+  janitor::clean_names() %>%
+  mutate(date = ym(x1)) %>%
+  select(everything(), -x1)
+
+div0 <- read_csv("Portfolios_Formed_on_D-P copy.CSV", skip = 19, n_max = 1134) %>%
+  # Perform an initial cleaning of the names in the dataset.
+  janitor::clean_names() %>%
+  mutate(date = ym(x1)) %>%
+  select(everything(), -x1)
+
+mom0 <- read_csv("10_Portfolios_Prior_12_2.CSV", skip = 10, n_max = 1140) %>%
+  # Perform an initial cleaning of the names in the dataset.
+  janitor::clean_names() %>%
+  mutate(date = ym(x1)) %>%
+  select(everything(), -x1)
+
+ind0 <- read_csv("49_Industry_Portfolios copy.CSV", skip = 11, n_max = 1146) %>%
+  # Perform an initial cleaning of the names in the dataset.
+  janitor::clean_names() %>%
+  mutate(date = ym(x1)) %>%
+  select(everything(), -x1)
+
+ff0 <- read_csv("F-F_Research_Data_Factors 2 copy.CSV", skip = 2, n_max = 1146) %>%
+  # Perform an initial cleaning of the names in the dataset.
+  janitor::clean_names() %>%
+  mutate(date = ym(x1))
+```
+
+# Question 7
+
+Go to CANVAS and download the data file PS4 Daily.xlsx. This file contains daily yield curve data
+for the United States between July 2 1981 and January 31 2020. In particular, you are given spot rates
+for 1-year, 2-years, ..., 20-years.
+
+```{r, warning = FALSE}
+data_q7 <- readxl::read_excel('PS4_Daily.xlsx') %>% 
+  janitor::clean_names() %>%
+  mutate_if(is.character, as.numeric) %>%
+  drop_na() %>%
+  mutate(date = ymd(date)) %>%
+  select(everything(), -date)
+
+skimr::skim(data_q7) 
+```
+
+
+# Question 8
+
+Use principal component analysis to examine the data. How many principal components are needed to
+explain the majority of the variation in the yields (hint: run prcomp on the yields and not on changes
+in yields)? Extract the first three components and plot them in a time series plot (again, you can
+extract them as discussed above).
+
+```{r}
+dims <- dim(data_q7)
+dims #dimensionality is 9626 by 20
+
+pca <- prcomp(data_q7) 
+
+str(pca)
+summary(pca) 
+plot(pca)
+```
+
+> The first component already explains 98.4% of the data and the first two explain 99.9% of the data. The variation in yields is very well explained by just the first principal component.
+
+```{r}
+plot(pca$x[,1],main="PC1",xlab="day",ylab="")
+plot(pca$x[,2],main="PC2",xlab="day",ylab="")
+plot(pca$x[,3],main="PC3",xlab="day",ylab="")
+```
+
+
