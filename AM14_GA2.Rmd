@@ -172,4 +172,4 @@ df <- data.frame(x1=pca$x[,1],
 cor(df)
 ```
 
-> There is no obvious correlationship between the first component and the 3-year yield and the second component and the difference between the 10-year and the 1-year yield.
+> There is no obvious correlationship among the first component and the second component and the difference between the 10-year and the 1-year yield. The first component and the 3-year yield are significantly negatively correlated.
