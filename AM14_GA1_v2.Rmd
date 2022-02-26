@@ -61,46 +61,51 @@ Also - upon inspection, the dates are not in the right format and need to be tra
 question2 <- c('MSFT', 'GE')
 
 monthly_q2 <- monthly_data %>%
-  filter(ticker %in% question2) %>% 
-  mutate(ret1 = ret +1,
-         inv_ret = if_else(ret1 == 1, 1, ret1 * lag(ret1)),
+  filter(ticker %in% question2) %>%
+  group_by(ticker) %>% 
+  mutate(ret1 = ret+1,
          retx1 = retx +1,
-         inv_retx = if_else(retx1 == 1, 1, retx1 * lag(retx1)),
-         sprtrn1 = sprtrn +1,
-         inv_sprtrn = if_else(sprtrn1 == 1, 1, sprtrn1 * lag(sprtrn1))) %>% 
+         sprtrn1 = sprtrn +1) %>% 
+  mutate(inv_ret = cumprod(ret1),
+         inv_retx = cumprod(retx1),
+         inv_sprtrn = cumprod(sprtrn1)) %>% 
   select(-ret1,-retx1,-sprtrn1)
 
 monthly_q2 %>% filter(ticker == "MSFT") %>% 
-  ggplot(aes(x=date)) +
-  geom_line(aes(y=inv_ret), color="red", alpha = 0.5, size = 1)+
-  geom_line(aes(y=inv_retx), color="blue",alpha = 0.5, size = 1)+
+  ggplot() +
+  geom_line(aes(x = date, y=inv_ret, color="With dividend"), alpha = 0.5, size = 1)+
+  geom_line(aes(x = date, y=inv_retx, color="Without dividend"),alpha = 0.5, size = 1)+
+  geom_line(aes(x = date, y=inv_sprtrn, color="S&P 500"),alpha = 0.5, size = 1)+
   theme_minimal()+
   labs(
-    title="Investment without dividends for MSFT",
+    title="Investment with versus without dividends for MSFT",
     y="Investment return",
     x="Date"
-  )
+  )+
+  scale_color_manual(name = "Y series", values = c("Without dividend" = "blue", "With dividend" = "red","S&P 500" = "green"))
 
 monthly_q2 %>% filter(ticker == "GE") %>% 
-  ggplot(aes(x=date)) +
-  geom_line(aes(y=inv_ret), color="red", alpha = 0.5, size = 1)+
-  geom_line(aes(y=inv_retx), color="blue",alpha = 0.5, size = 1)+
+  ggplot() +
+  geom_line(aes(x = date, y=inv_ret, color="With dividend"), alpha = 0.5, size = 1)+
+  geom_line(aes(x = date, y=inv_retx, color="Without dividend"),alpha = 0.5, size = 1)+
+  geom_line(aes(x = date, y=inv_sprtrn, color="S&P 500"),alpha = 0.5, size = 1)+
   theme_minimal()+
   labs(
-    title="Investment without dividends for GE",
+    title="Investment with versus without dividends for GE",
     y="Investment return",
     x="Date"
-  )
+  )+
+  scale_color_manual(name = "Y series", values = c("Without dividend" = "blue", "With dividend" = "red","S&P 500" = "green"))
+
 ```
 
 
 
 
 ## Question 3
-yuting: since some return < 0, I filter out them
 
 ```{r}
-monthly_log <- monthly_data %>% filter(ret > 0) %>% mutate(lret = log(ret)) 
+monthly_log <- monthly_data %>% mutate(lret = log(1+ret)) 
 sum_table_monthly <- monthly_log %>% 
   group_by(ticker) %>% 
   summarise(ret_mean = mean(ret),
@@ -129,13 +134,10 @@ monthly_log %>% filter(ticker == "MSFT") %>%
 ```
 
 # Q4
-Yuting: I manually separate two worksheet into two excel files.
+
 
 ```{r}
-daily_data <- read_excel("PS1_Daily.xlsx", sheet = "HPR_daily", skip = 1) %>%
-  janitor::clean_names()%>% 
-  mutate(date = ymd(date))
-skimr::skim(daily_data)
+
 ```
 
 ```{r, Question 5, fig.width=12}

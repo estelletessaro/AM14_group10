@@ -163,4 +163,13 @@ plot(pca$x[,2],main="PC2",xlab="day",ylab="")
 plot(pca$x[,3],main="PC3",xlab="day",ylab="")
 ```
 
+```{r}
+df <- data.frame(x1=pca$x[,1],
+                x2=data_q7$sveny03,
+                x3=pca$x[,2],
+                x4=data_q7$sveny10-data_q7$sveny01)
 
+cor(df)
+```
+
+> There is no obvious correlationship between the first component and the 3-year yield and the second component and the difference between the 10-year and the 1-year yield.
