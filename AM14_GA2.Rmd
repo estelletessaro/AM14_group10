@@ -82,42 +82,274 @@ We can conclude that the volatility estimated by EWMA is more accurate and more 
 
 # Question 2
 
-```{r}
-op_prof0 <- read_csv("Portfolios_Formed_on_OP copy.CSV", skip = 24, n_max = 702) %>%
-  # Perform an initial cleaning of the names in the dataset.
-  janitor::clean_names() %>%
-  mutate(date = ym(x1)) %>%
-  select(everything(), -x1)
-
-inv0 <- read_csv("Portfolios_Formed_on_INV copy.CSV", skip = 17, n_max = 702) %>%
-  # Perform an initial cleaning of the names in the dataset.
-  janitor::clean_names() %>%
-  mutate(date = ym(x1)) %>%
-  select(everything(), -x1)
-
-div0 <- read_csv("Portfolios_Formed_on_D-P copy.CSV", skip = 19, n_max = 1134) %>%
-  # Perform an initial cleaning of the names in the dataset.
-  janitor::clean_names() %>%
-  mutate(date = ym(x1)) %>%
-  select(everything(), -x1)
-
-mom0 <- read_csv("10_Portfolios_Prior_12_2.CSV", skip = 10, n_max = 1140) %>%
-  # Perform an initial cleaning of the names in the dataset.
-  janitor::clean_names() %>%
-  mutate(date = ym(x1)) %>%
-  select(everything(), -x1)
-
-ind0 <- read_csv("49_Industry_Portfolios copy.CSV", skip = 11, n_max = 1146) %>%
-  # Perform an initial cleaning of the names in the dataset.
-  janitor::clean_names() %>%
-  mutate(date = ym(x1)) %>%
-  select(everything(), -x1)
-
-ff0 <- read_csv("F-F_Research_Data_Factors 2 copy.CSV", skip = 2, n_max = 1146) %>%
-  # Perform an initial cleaning of the names in the dataset.
-  janitor::clean_names() %>%
-  mutate(date = ym(x1))
+```{r, reading f&f data}
+#Reading the Fama/French 3 factors at monthly frequency
+ff_data <- read.csv("F-F_Research_Data_Factors.csv", skip = 3, nrows = 1146) %>% 
+  #Cleaning column names
+  janitor::clean_names()
+#Renaming date column as it is named x by default
+names(ff_data)[names(ff_data) == 'x'] <- 'date'
+#Adding 01 date for formating
+ff_data <- ff_data %>% 
+  mutate(
+    date = paste(date, "01", sep="")
+  )
+#Converting date to date column
+ff_data <- ff_data %>%
+  mutate(
+    date = as.Date(date, "%Y%m%d")
+  )
 ```
+
+```{r, reading op data}
+#Reading portfolios formed on Operating Profitability
+pf_op_data <- read.csv("Portfolios_Formed_on_OP.csv", skip = 24, nrows = 702) %>% 
+  #Cleaning column names
+  janitor::clean_names()
+#Renaming date column as it is named x by default
+names(pf_op_data)[names(pf_op_data) == 'x'] <- 'date'
+#Adding 01 date for formating
+pf_op_data <- pf_op_data %>% 
+  mutate(
+    date = paste(date, "01", sep="")
+  ) %>% 
+  select(date, lo_10, dec_2, dec_3, dec_4, dec_5, dec_6, dec_7, dec_8, dec_9, hi_10)
+#Converting date to date column
+pf_op_data <- pf_op_data %>%
+  mutate(
+    date = as.Date(date, "%Y%m%d")
+  )
+#Joining data on date
+data_op <- left_join(pf_op_data, ff_data, by = "date")
+```
+
+```{r}
+#Getting names of portfolios
+pf_names <- colnames(data_op)[2:11]
+#Initializing a dataframe with date
+data_op_excess = data.frame(data_op$date)
+#Looping over all portfolios to calculate excess returns
+for (i in 1:length(pf_names)){
+  pf_name = pf_names[i]
+  #Excess return
+  data_op_excess[, paste(pf_name, "_excess_returns")] = data_op[, pf_name] - data_op$rf
+}
+#Calculating weight of each portfolio
+weight = 1 / length(pf_names)
+#Multiplying each portfolio's excess return by weight
+data_op_excess[, -1] <- data_op_excess[, -1] * weight
+#Summing up returns for all portfolios
+total_returns <- rowSums(data_op_excess[, -1])
+#Combining date and total returns
+data_op_excess <- data.frame(data_op$date, total_returns)
+#Renaming date column as it is named x by default
+names(data_op_excess) <- c('date', 'op_returns')
+```
+
+```{r, reading inv data}
+#Reading portfolios formed on Investment
+pf_inv_data <- read.csv("Portfolios_Formed_on_INV.csv", skip = 17, nrows = 702) %>% 
+  #Cleaning column names
+  janitor::clean_names()
+#Renaming date column as it is named x by default
+names(pf_inv_data)[names(pf_inv_data) == 'x'] <- 'date'
+#Adding 01 date for formating
+pf_inv_data <- pf_inv_data %>% 
+  mutate(
+    date = paste(date, "01", sep="")
+  ) %>% 
+  select(date, lo_10, dec_2, dec_3, dec_4, dec_5, dec_6, dec_7, dec_8, dec_9, hi_10)
+#Converting date to date column
+pf_inv_data <- pf_inv_data %>%
+  mutate(
+    date = as.Date(date, "%Y%m%d")
+  )
+#Joining data on date
+data_inv <- left_join(pf_inv_data, ff_data, by = "date")
+```
+
+```{r}
+#Getting names of portfolios
+pf_names <- colnames(data_inv)[2:11]
+#Initializing a dataframe with date
+data_inv_excess = data.frame(data_inv$date)
+#Looping over all portfolios to calculate excess returns
+for (i in 1:length(pf_names)){
+  pf_name = pf_names[i]
+  #Excess return
+  data_inv_excess[, paste(pf_name, "_excess_returns")] = data_inv[, pf_name] - data_inv$rf
+}
+#Calculating weight of each portfolio
+weight = 1 / length(pf_names)
+#Multiplying each portfolio's excess return by weight
+data_inv_excess[, -1] <- data_inv_excess[, -1] * weight
+#Summing up returns for all portfolios
+total_returns <- rowSums(data_inv_excess[, -1])
+#Combining date and total returns
+data_inv_excess <- data.frame(data_inv$date, total_returns)
+#Renaming date column as it is named x by default
+names(data_inv_excess) <- c('date', 'inv_returns')
+```
+
+```{r, reading div data}
+#Reading portfolios formed on Dividend Yield
+pf_div_data <- read.csv("Portfolios_Formed_on_D-P.csv", skip = 19, nrows = 1134) %>% 
+  #Cleaning column names
+  janitor::clean_names()
+#Renaming date column as it is named x by default
+names(pf_div_data)[names(pf_div_data) == 'x'] <- 'date'
+#Adding 01 date for formating
+pf_div_data <- pf_div_data %>% 
+  mutate(
+    date = paste(date, "01", sep="")
+  ) %>% 
+  select(date, lo_10, dec_2, dec_3, dec_4, dec_5, dec_6, dec_7, dec_8, dec_9, hi_10)
+#Converting date to date column
+pf_div_data <- pf_div_data %>%
+  mutate(
+    date = as.Date(date, "%Y%m%d")
+  )
+#Joining data on date
+data_div <- left_join(pf_div_data, ff_data, by = "date")
+```
+
+```{r}
+#Getting names of portfolios
+pf_names <- colnames(data_div)[2:11]
+#Initializing a dataframe with date
+data_div_excess = data.frame(data_div$date)
+#Looping over all portfolios to calculate excess returns
+for (i in 1:length(pf_names)){
+  pf_name = pf_names[i]
+  #Excess return
+  data_div_excess[, paste(pf_name, "_excess_returns")] = data_div[, pf_name] - data_div$rf
+}
+#Calculating weight of each portfolio
+weight = 1 / length(pf_names)
+#Multiplying each portfolio's excess return by weight
+data_div_excess[, -1] <- data_div_excess[, -1] * weight
+#Summing up returns for all portfolios
+total_returns <- rowSums(data_div_excess[, -1])
+#Combining date and total returns
+data_div_excess <- data.frame(data_div$date, total_returns)
+#Renaming date column as it is named x by default
+names(data_div_excess) <- c('date', 'div_returns')
+```
+
+```{r, reading momentum data}
+#Reading portfolios formed on Momentum
+pf_mom_data <- read.csv("10_Portfolios_Prior_12_2.csv", skip = 10, nrows = 1140) %>% 
+  #Cleaning column names
+  janitor::clean_names()
+#Renaming date column as it is named x by default
+names(pf_mom_data)[names(pf_mom_data) == 'x'] <- 'date'
+#Adding 01 date for formating
+pf_mom_data <- pf_mom_data %>% 
+  mutate(
+    date = paste(date, "01", sep="")
+  )
+#Converting date to date column
+pf_mom_data <- pf_mom_data %>%
+  mutate(
+    date = as.Date(date, "%Y%m%d")
+  )
+#Joining data on date
+data_mom <- left_join(pf_mom_data, ff_data, by = "date")
+```
+
+
+```{r}
+#Getting names of portfolios
+pf_names <- colnames(data_mom)[2:11]
+#Initializing a dataframe with date
+data_mom_excess = data.frame(data_mom$date)
+#Looping over all portfolios to calculate excess returns
+for (i in 1:length(pf_names)){
+  pf_name = pf_names[i]
+  #Excess return
+  data_mom_excess[, paste(pf_name, "_excess_returns")] = data_mom[, pf_name] - data_mom$rf
+}
+#Calculating weight of each portfolio
+weight = 1 / length(pf_names)
+#Multiplying each portfolio's excess return by weight
+data_mom_excess[, -1] <- data_mom_excess[, -1] * weight
+#Summing up returns for all portfolios
+total_returns <- rowSums(data_mom_excess[, -1])
+#Combining date and total returns
+data_mom_excess <- data.frame(data_mom$date, total_returns)
+#Renaming date column as it is named x by default
+names(data_mom_excess) <- c('date', 'mom_returns')
+```
+
+```{r, reading 49 industry data}
+#Reading 49 indsustry portfolios
+pf_49i_data <- read.csv("49_Industry_Portfolios.csv", skip = 11, nrows = 1146) %>% 
+  #Cleaning column names
+  janitor::clean_names()
+#Renaming date column as it is named x by default
+names(pf_49i_data)[names(pf_49i_data) == 'x'] <- 'date'
+#Adding 01 date for formating
+pf_49i_data <- pf_49i_data %>% 
+  mutate(
+    date = paste(date, "01", sep="")
+  )
+#Converting date to date column
+pf_49i_data <- pf_49i_data %>%
+  mutate(
+    date = as.Date(date, "%Y%m%d")
+  )
+#Joining data on date
+data_49i <- left_join(pf_49i_data, ff_data, by = "date")
+```
+
+```{r}
+#Getting names of portfolios
+pf_names <- colnames(data_49i)[2:11]
+#Initializing a dataframe with date
+data_49i_excess = data.frame(data_49i$date)
+#Looping over all portfolios to calculate excess returns
+for (i in 1:length(pf_names)){
+  pf_name = pf_names[i]
+  #Excess return
+  data_49i_excess[, paste(pf_name, "_excess_returns")] = data_49i[, pf_name] - data_49i$rf
+}
+#Calculating weight of each portfolio
+weight = 1 / length(pf_names)
+#Multiplying each portfolio's excess return by weight
+data_49i_excess[, -1] <- data_49i_excess[, -1] * weight
+#Summing up returns for all portfolios
+total_returns <- rowSums(data_49i_excess[, -1])
+#Combining date and total returns
+data_49i_excess <- data.frame(data_49i$date, total_returns)
+#Renaming date column as it is named x by default
+names(data_49i_excess) <- c('date', '49i_returns')
+```
+
+
+# Question 3
+```{r, combining excess returns of all portfolios}
+excess_return_data <- inner_join(data_op_excess, data_inv_excess, by = "date")
+excess_return_data <- inner_join(excess_return_data, data_div_excess, by = "date")
+excess_return_data <- inner_join(excess_return_data, data_mom_excess, by = "date")
+excess_return_data <- inner_join(excess_return_data, data_49i_excess, by = "date")
+
+excess_return_data_v1 <- excess_return_data[, -c(1)]
+```
+
+```{r}
+pca = prcomp(excess_return_data_v1)
+summary(pca)
+plot(pca)
+```
+
+# Question 4
+
+
+# Question 5
+
+
+# Question 6
+
 
 # Question 7
 
