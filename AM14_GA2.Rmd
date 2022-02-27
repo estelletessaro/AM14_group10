@@ -327,6 +327,7 @@ names(data_49i_excess) <- c('date', '49i_returns')
 
 
 # Question 3
+
 ```{r, combining excess returns of all portfolios}
 excess_return_data <- inner_join(data_op_excess, data_inv_excess, by = "date")
 excess_return_data <- inner_join(excess_return_data, data_div_excess, by = "date")
@@ -337,15 +338,126 @@ excess_return_data_v1 <- excess_return_data[, -c(1)]
 ```
 
 ```{r}
-pca = prcomp(excess_return_data_v1)
+pca = prcomp(excess_return_data_v1, retx = TRUE)
 summary(pca)
 plot(pca)
 ```
 
+
+
 # Question 4
+
+```{r Regression FF, warning = FALSE}
+
+reg_joined <- merge(pf_div_data, pf_op_data, by = "date") %>%
+  merge(pf_inv_data, by = "date") %>%
+  merge(pf_mom_data, by = "date") %>%
+  merge(pf_49i_data, by = "date") %>% 
+  merge(ff_data, by = "date")
+
+# Obtain Portfolio Names
+portfolios <- (as.data.frame(t(colnames(reg_joined)[2:90])))
+
+# Create a blank data frame to store regression results for different portfolios
+regression_results <- data.frame(matrix(ncol = 1, nrow = 89))
+
+# Assign column names and row names for this data frame
+colnames(regression_results) <- c("Adjusted R Squared") 
+rownames(regression_results) <- portfolios # Rows are different portfolios
+
+# Assign 'count' for loop results
+count <- c(1:89)
+  
+# Initiate the for loop
+for (i in count) {
+  # Create a dummy data set for the regression
+  reg_dummy <- reg_joined %>%
+    # Mutate to create the y variable for the regression - loop dependent
+    mutate(y = .[[i+1]] - .[[94]])
+  # Run the regression within the loop
+  reg_fit_dummy = lm(y~mkt_rf + smb + hml, data = reg_dummy)
+  # print(summary(reg_fit_dummy)[9])
+  # Print out the R^2 for the regression - add to data frame of results
+  regression_results[i,1] <- summary(reg_fit_dummy)[9]
+}
+
+
+# Finally, print out results of the adjusted R^2 for all portfolios...
+
+# Mean of the adjusted R^2
+print(mean(as.numeric(unlist(regression_results))))
+
+# Median of the adjusted R^2
+print(median(as.numeric(unlist(regression_results))))
+
+# Standard Deviation of the adjusted R^2
+print(sd(as.numeric(unlist(regression_results))))
+
+```
+
 
 
 # Question 5
+
+```{r PCA regression, warning = FALSE }
+
+reg_joined_2 <- merge(pf_div_data, pf_op_data, by = "date") %>%
+  merge(pf_inv_data, by = "date") %>%
+  merge(pf_mom_data, by = "date") %>%
+  merge(pf_49i_data, by = "date") %>% 
+  merge(ff_data, by = "date")
+
+# Obtain Portfolio Names
+portfolios_2 <- (as.data.frame(t(colnames(reg_joined)[2:90])))
+
+# Create a blank data frame to store regression results for different portfolios
+regression_results_2 <- data.frame(matrix(ncol = 1, nrow = 89))
+
+# Assign column names and row names for this data frame
+colnames(regression_results_2) <- c("Adjusted R Squared") 
+rownames(regression_results_2) <- portfolios # Rows are different portfolios
+
+# Assign 'count' for loop results
+count <- c(1:89)
+  
+# Initiate the for loop
+for (i in count) {
+  # Create a dummy data set for the regression
+  reg_dummy_2 <- reg_joined_2 %>%
+    # Mutate to create the y variable for the regression - loop dependent
+    mutate(y = .[[i+1]] - .[[94]])
+  # Run the regression within the loop
+  reg_fit_dummy_2 = lm(reg_dummy_2$y ~ pca$x[,1] + pca$x[,2] + pca$x[,3])
+  # print(summary(reg_fit_dummy)[9])
+  # Print out the R^2 for the regression - add to data frame of results
+  regression_results_2[i,1] <- summary(reg_fit_dummy_2)[9]
+}
+
+
+# Finally, print out results of the adjusted R^2 for all portfolios...
+
+# Mean of the adjusted R^2
+print(mean(as.numeric(unlist(regression_results_2))))
+
+# Median of the adjusted R^2
+print(median(as.numeric(unlist(regression_results_2))))
+
+# Standard Deviation of the adjusted R^2
+print(sd(as.numeric(unlist(regression_results_2))))
+
+```
+
+As we can see the results of the second regression (involving the PCA terms) 
+exhibit a slight improvement on the first regression (which was performed using
+the FAMA-FRENCH 3 factors). Notably, there is a slight increase in the mean R^2 
+for the different portfolios - this suggests that the regression models (with the 
+PCA terms) are better explaining the variability in the returns of the portfolios
+(when compared to the regression models involving the F-F terms). There is also 
+less variation in the R^2 amongst different portfolios for the second regression 
+type. 
+
+
+
 
 
 # Question 6
