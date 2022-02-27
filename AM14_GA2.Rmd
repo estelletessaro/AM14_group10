@@ -1,5 +1,5 @@
 ---
-title: "AM14_GA2"
+title: "Empirical Finance Group Assignment"
 author: "Group 10"
 date: "2/16/2022"
 output: html_document
@@ -398,26 +398,20 @@ print(sd(as.numeric(unlist(regression_results))))
 # Question 5
 
 ```{r PCA regression, warning = FALSE }
-
 reg_joined_2 <- merge(pf_div_data, pf_op_data, by = "date") %>%
   merge(pf_inv_data, by = "date") %>%
   merge(pf_mom_data, by = "date") %>%
   merge(pf_49i_data, by = "date") %>% 
   merge(ff_data, by = "date")
-
 # Obtain Portfolio Names
 portfolios_2 <- (as.data.frame(t(colnames(reg_joined)[2:90])))
-
 # Create a blank data frame to store regression results for different portfolios
 regression_results_2 <- data.frame(matrix(ncol = 1, nrow = 89))
-
 # Assign column names and row names for this data frame
 colnames(regression_results_2) <- c("Adjusted R Squared") 
 rownames(regression_results_2) <- portfolios # Rows are different portfolios
-
 # Assign 'count' for loop results
 count <- c(1:89)
-  
 # Initiate the for loop
 for (i in count) {
   # Create a dummy data set for the regression
@@ -433,16 +427,12 @@ for (i in count) {
 
 
 # Finally, print out results of the adjusted R^2 for all portfolios...
-
 # Mean of the adjusted R^2
 print(mean(as.numeric(unlist(regression_results_2))))
-
 # Median of the adjusted R^2
 print(median(as.numeric(unlist(regression_results_2))))
-
 # Standard Deviation of the adjusted R^2
 print(sd(as.numeric(unlist(regression_results_2))))
-
 ```
 
 As we can see the results of the second regression (involving the PCA terms) 
