@@ -447,6 +447,9 @@ type.
 
 # Question 6
 
+What are the problems with factor models based on principal components?
+
+The biggest limitation of principal components is interpretability. Principle Component are linear combinations of the returns for each date. Conversely,Fama-French 3 factors are highly interpretable, as they are specific characteristics of stocks - size of firm, book-to-market value, and excess return on the market. Therefore, the PC components lack in supporting financial intuition. Furthermore, PC components suffer from overfitting, as they are constructed based on a specific dataset, which is not representative of future stock movements and can lead to invalid results.
 
 # Question 7
 
