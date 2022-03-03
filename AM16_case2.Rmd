@@ -1,0 +1,80 @@
+---
+title: "AM16_case2"
+author: "Estelle Tessaro"
+date: "3/2/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load libraries and data
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+library(lubridate)
+```
+
+```{r}
+setwd("/Users/estelletessaro/Library/Mobile Documents/com~apple~CloudDocs/2021/LBS '21-'22/Accounting/Data")
+
+begInv <- read.csv("BegInv.csv") %>% 
+  janitor::clean_names() 
+
+endInv <- read.csv("EndInv.csv") %>% 
+  janitor::clean_names()
+
+sales <- read.csv("Sales.csv") %>% 
+  janitor::clean_names()
+
+purchases <- read.csv("Purchases.csv") %>% 
+  janitor::clean_names()
+```
+
+
+#Question 1 
+
+```{r}
+begInv1 <- begInv %>%
+  select(inventory_id, store, on_hand) %>%
+  mutate(begInv = on_hand) %>%
+  select(-on_hand)
+
+endInv1 <- endInv %>%
+  select(inventory_id, on_hand) %>%
+  mutate(endInv = on_hand) %>%
+  select(-on_hand)
+
+purchases1 <- purchases %>%
+  select(inventory_id, quantity) %>%
+  mutate(purchases = quantity) %>%
+  select(-quantity) %>%
+  group_by(inventory_id) %>% 
+  summarise(purchases = sum(purchases))
+
+sales1 <- sales %>%
+  select(inventory_id, sales_quantity) %>%
+  mutate(sales = sales_quantity) %>%
+  select(-sales_quantity) %>%
+  group_by(inventory_id) %>% 
+  summarise(sales = sum(sales))
+```
+
+```{r}
+inv_calc <- merge(begInv1, endInv1, all = TRUE)
+inv_calc <- merge(inv_calc, purchases1, all = TRUE)
+inv_calc <- merge(inv_calc, sales1, all = TRUE)
+
+inv_calc[is.na(inv_calc)] <- 0
+
+inv_calc <- inv_calc %>%
+  mutate(inv_roll_forward = begInv + purchases - sales,
+         inv_discrepancy = inv_roll_forward - endInv)
+
+sum(inv_calc$inv_discrepancy)
+#there are no discrepancies in the books.
+```
+
